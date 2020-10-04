@@ -36,11 +36,13 @@ router.post('/newFeed', async (req, res, next) => {
     const feedsRef = db.collection('feeds');
 
     await feedsRef.add({
-      entries: ["foo", "bar"],
+      entries: ["foo", "bar", "baz"],
       schedule: {
-        dayOfWeek: 3,
-        frequency: 7,
-      }
+        dayOfWeek: 7,
+        frequency: 1,
+        lastSent: null,
+      },
+      isActive: true
     }).then(
         res.json('Feed added')
     );

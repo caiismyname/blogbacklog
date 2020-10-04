@@ -1,6 +1,10 @@
 const admin = require('firebase-admin');
 const serviceAccount = require('/Users/davidcai/Desktop/blogbacklog-cb6c3df2e9a2.json'); //TODO temp path
 const { DateTime } = require('luxon');
+const mailgun = require("mailgun-js");
+const DOMAIN = 'mail.blogbacklog.com';
+const mailgunAPIKey = require('/Users/davidcai/Desktop/mailgun-api-key.json'); //TODO temp path
+const mg = mailgun({apiKey: mailgunAPIKey.key, domain: DOMAIN});
 
 // Firebase Initialization
 
@@ -13,13 +17,18 @@ const feedsRef = db.collection('feeds');
 
 // Receive `now` to approximate a point-in-time run across multiple invocations
 function shouldSend(lastSentSeconds, frequency, dayOfWeek, now) {
-    lastSent = DateTime.fromSeconds(lastSentSeconds);
-    nextSend = lastSent.plus({days: frequency});
+    let correctDate = true; // default to true in the event that there wasn't a previous send yet
 
-    correctDate = now.hasSame(nextSend, 'day');
+    if (lastSentSeconds) {
+        lastSent = DateTime.fromSeconds(lastSentSeconds._seconds);
+        nextSend = lastSent.plus({days: frequency});
+
+        correctDate = now.hasSame(nextSend, 'day');
+    }
+    
     correctDayOfWeek = now.weekday === dayOfWeek; //  Luxon: 1 is Monday, 7 is Sunday
 
-    console.log(lastSent.toISODate(), nextSend.toISODate(), correctDate, correctDayOfWeek);
+    // console.log(lastSent.toISODate(), nextSend.toISODate(), correctDate, correctDayOfWeek);
 
     return (correctDate && correctDayOfWeek);
 }
@@ -28,7 +37,7 @@ async function getFeedsToSend(now) {
     const snapshot = await feedsRef.where('isActive', '==', true).get();
 
     if (snapshot.empty) {
-        console.log('No matching documents.');
+        console.log('No feeds to send at ', now.toISODate());
         return;
     };
 
@@ -39,8 +48,12 @@ async function getFeedsToSend(now) {
     let toSend = [];
     snapshot.forEach(feed => {
         const schedule = feed.data().schedule;
-        if (shouldSend(schedule.lastSent._seconds, schedule.frequency, schedule.dayOfWeek, now)) {
-            toSend.push(feed);
+        if (shouldSend(
+            schedule.lastSent,
+            schedule.frequency,
+            schedule.dayOfWeek,
+            now)) {
+                toSend.push(feed);
         }
     });
     return (toSend);
@@ -48,7 +61,21 @@ async function getFeedsToSend(now) {
 
 function sendMail(toSend) {
     toSend.forEach(feed => {
-        console.log("Pretending to send" + feed.id);
+        console.log("Sending", feed.id);
+        const data = {
+            from: 'Blog Backlog <send@mail.blogbacklog.com>',
+            to: 'davidcai2012@gmail.com',
+            subject: 'Hello',
+            text: 'Feed ID: ' + feed.id,
+        };
+        mg.messages().send(data, function (error, body) {
+            if (body) {
+                console.log(body);
+            }
+            if (error) {
+                console.log(error);
+            }
+        });
     });
 
     return (toSend);
@@ -60,8 +87,8 @@ function createUpdatedDatabaseEntry(feed, now) {
     if (feed.entries.length === 1) {
         updatedFeed.isActive = false;
     } else {
-        updatedFeed.lastSent = now.toISODate();
-        updatedFeed.entries = feed.entries.slice(1);
+        // updatedFeed.schedule.lastSent = now.toISODate();
+        // updatedFeed.entries = feed.entries.slice(1);
     }
 
     return (updatedFeed);
@@ -90,7 +117,9 @@ async function start() {
     let now = DateTime.local();
 
     const toSend = await getFeedsToSend(now);
-    processFeedsToSend(toSend, now);
+    if (toSend) {
+        processFeedsToSend(toSend, now);
+    }
 }
 
 start();
