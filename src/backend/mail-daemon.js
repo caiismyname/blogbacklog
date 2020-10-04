@@ -16,11 +16,10 @@ const db = admin.firestore();
 const feedsRef = db.collection('feeds');
 
 // Receive `now` to approximate a point-in-time run across multiple invocations
-function shouldSend(lastSentSeconds, frequency, dayOfWeek, now) {
+function shouldSend(lastSentString, frequency, dayOfWeek, now) {
     let correctDate = true; // default to true in the event that there wasn't a previous send yet
-
-    if (lastSentSeconds) {
-        lastSent = DateTime.fromSeconds(lastSentSeconds._seconds);
+    if (lastSentString) {
+        lastSent = DateTime.fromISO(lastSentString);
         nextSend = lastSent.plus({days: frequency});
 
         correctDate = now.hasSame(nextSend, 'day');
