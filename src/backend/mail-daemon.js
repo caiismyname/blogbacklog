@@ -1,9 +1,9 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('/Users/davidcai/Desktop/blogbacklog-cb6c3df2e9a2.json'); //TODO temp path
+const serviceAccount = require('./blogbacklog-cb6c3df2e9a2.json');
 const { DateTime } = require('luxon');
 const mailgun = require("mailgun-js");
 const DOMAIN = 'mail.blogbacklog.com';
-const mailgunAPIKey = require('/Users/davidcai/Desktop/mailgun-api-key.json'); //TODO temp path
+const mailgunAPIKey = require('./mailgun-api-key.json');
 const mg = mailgun({apiKey: mailgunAPIKey.key, domain: DOMAIN});
 
 // Firebase Initialization

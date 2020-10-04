@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const PORT = 4000;
 const admin = require('firebase-admin');
-const serviceAccount = require('//Users/davidcai/Desktop/blogbacklog-cb6c3df2e9a2.json'); //TODO temp path
+const serviceAccount = require('./blogbacklog-cb6c3df2e9a2.json');
 const router = express.Router();
 
 // App + Router initialization
