@@ -23,5 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 # api keys
-src/backend/blogbacklog-cb6c3df2e9a2.json
-src/backend/mailgun-api-key.json
+blogbacklog-cb6c3df2e9a2.json
+mailgun-api-key.json
