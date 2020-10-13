@@ -1,5 +1,29 @@
+// For Help: https://webapplog.com/jade/
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+    h1= title
+    p Welcome to #{title}.
+    p This site allows you to turn a series of links (blog) into regularly scheduled newsletter.
+    p We think it's particularly useful for when you discover a blog with a history that you want to enjoy, but I'm sure you'll think of other uses as well.
+    hr
+    p To get started, enter your links below, separating each with a comma.
+    br
+    form(name="input-links", action="/process/newFeed", method="post")
+        div.input
+            textarea(name="links", cols="40", rows="5")
+            hr
+            p Select your delivery schedule:
+            each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                input(type="radio", name="dayOfWeek", value=day, id=day)
+                label(for=day)=" " + day
+                br
+            br
+            p Select your frequency:
+            each str, val in {1: "Daily", 7: "Weekly"}
+                input(type="radio", name="frequency", value=val, id=val)
+                label(for=val)=" " + str 
+                br
+        br
+        div.action
+            input(type="submit", value="validate")

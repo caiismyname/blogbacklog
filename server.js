@@ -2,8 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 // const cors = require('cors');
 const PORT = 4000;
-const admin = require('firebase-admin');
-const serviceAccount = require('./blogbacklog-cb6c3df2e9a2.json');
+
 
 var createError = require('http-errors');
 var path = require('path');
@@ -47,13 +46,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-// Firebase Initialization
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-const db = admin.firestore();
 
 module.exports = app;
