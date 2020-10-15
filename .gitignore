@@ -26,3 +26,4 @@ yarn-error.log*
 # api keys
 blogbacklog-cb6c3df2e9a2.json
 mailgun-api-key.json
+.env

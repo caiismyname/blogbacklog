@@ -9,6 +9,7 @@
     "cookie-parser": "1.4.5",
     "cors": "2.8.5",
     "debug": "~2.6.9",
+    "dotenv": "8.2.0",
     "express": "~4.16.1",
     "firebase-admin": "9.2.0",
     "html-dom-parser": "0.3.0",
