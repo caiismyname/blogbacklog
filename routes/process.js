@@ -15,14 +15,6 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // Helpers
-
-function cleanLinks(links) {
-    const commaSplit = links.split(",");
-    const cleaned = commaSplit.map(x => x.replace(" ", ""));
-
-    return(cleaned);
-}
-
 function cleanDayOfWeek(dayString) {
     return(DateTime.fromFormat(dayString, "EEEE").weekday);
 }
@@ -79,7 +71,23 @@ function findRoot(parsed) {
     return(candidates);
 }
 
-async function parseWebpage(url) {
+function cleanLinks(links, baseUrl) {
+    var cleanedLinks = [];
+    for (idx in links) {
+        var link = links[idx];
+        link = link.replace(" ", "");
+
+        if (link.slice(0,4) !== "http") {
+            link = baseUrl + link;
+        }
+
+        cleanedLinks.push(link);
+    }
+
+    return(cleanedLinks);
+}
+
+async function parseWebpage(url, callback) {
     request(url, (err, res, body) => {
         const nodes = findRoot(domParser(body));
         var foundLinks = {};
@@ -88,7 +96,19 @@ async function parseWebpage(url) {
             foundLinks = mergeDicts(foundLinks, traverser(node, 0));
         }
 
-        console.log(foundLinks);
+        var candidateLinks = [];
+        var maxFoundLength = -1;
+
+        for (key in foundLinks) {
+            if (foundLinks[key].length > maxFoundLength) {
+                candidateLinks = foundLinks[key];
+                maxFoundLength = foundLinks[key].length;
+            }
+        }
+
+        const cleanedLinks = cleanLinks(candidateLinks, url);
+        console.log(cleanedLinks);
+        callback(cleanedLinks);
     });
 }
 
@@ -98,32 +118,49 @@ router.get('/feed', (req, res, next) => {
 
 });
 
-router.post('/newFeed', async (req, res, next) => {
+router.post('/createFeed', async (req, res, next) => {
     const feedsRef = db.collection('feeds');
     
     console.log(req.body);
-    const cleanedLinks = cleanLinks(req.body.links);
-    const cleanedDayOfWeek = cleanDayOfWeek(req.body.dayOfWeek);
+    // const cleanedDayOfWeek = cleanDayOfWeek(req.body.dayOfWeek);
 
     await feedsRef.add({
-      entries: cleanedLinks,
+      entries: req.body.links,
       schedule: {
-        dayOfWeek: cleanedDayOfWeek,
+        // dayOfWeek: cleanedDayOfWeek,
         frequency: Number(req.body.frequency),
         lastSent: null,
       },
+      recipientEmail: req.body.recipientEmail,
       isActive: true
     }).then(
-        res.json('Feed added')
+        res.render('complete', 
+            { 
+                title: 'Blog Backlog',
+                data: {
+                    numLinks: req.body.links.length,
+                    recipientEmail: req.body.recipientEmail,
+                    frequency: req.body.frequency,
+                },
+            }
+        )
     );
 });
 
-router.post('/parseUrl', async (req, res, next) => {
-    url = req.body.url;
-    parseWebpage(url).then(
-        res.send(400) // temp
-    );
+router.post('/parseUrls', async (req, res, next) => {
+    url = req.body.baseUrl;
+    parseWebpage(url, (cleanedLinks) => {
 
+        res.render('saveChanges', 
+            { 
+                title: 'Blog Backlog',
+                data: {
+                    links: cleanedLinks,
+                    baseUrl: url,
+                },
+            }
+        );
+    });
 });
 
 module.exports = router;

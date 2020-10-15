@@ -4,26 +4,14 @@ extends layout
 block content
     h1= title
     p Welcome to #{title}.
-    p This site allows you to turn a series of links (blog) into regularly scheduled newsletter.
-    p We think it's particularly useful for when you discover a blog with a history that you want to enjoy, but I'm sure you'll think of other uses as well.
+    p This tool allows you to delivery a series of extracted links regularly to your email, sort of like a time-shifted newsletter (but just the links, not the content behind them).
+    p It's particularly useful for when you discover a blog with a history that you want to enjoy, but I'm sure you'll think of other uses as well.
     hr
-    p To get started, enter your links below, separating each with a comma.
+    p To get started, enter the URL of the page that we'll extract links from:
     br
-    form(name="input-links", action="/process/newFeed", method="post")
+    form(name="inputUrl", action="/process/parseUrls", method="post")
         div.input
-            textarea(name="links", cols="40", rows="5")
-            hr
-            p Select your frequency:
-            each str, val in {1: "Daily", 7: "Weekly"}
-                input(type="radio", name="frequency", value=val, id=val)
-                label(for=val)=" " + str 
-                br
-            p Select your delivery schedule:
-            each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                input(type="radio", name="dayOfWeek", value=day, id=day)
-                label(for=day)=" " + day
-                br
-            br
+            input(type="text", name="baseUrl")
         br
         div.action
-            input(type="submit", value="validate")
+            input(type="submit", value="Extract")

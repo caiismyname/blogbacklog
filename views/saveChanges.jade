@@ -1,0 +1,31 @@
+// For Help: https://webapplog.com/jade/
+extends layout
+
+block content
+    form(name="submitInfo", action="/process/createFeed", method="post")
+        h1 Here's what we found
+        p Extracted links from #{data.baseUrl}
+        br
+        each link in data.links
+             input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox
+             label(for=link)=" " + link
+             br
+        hr
+        h2 Delivery Schedule
+        div.input
+            p Frequency: Every n days
+            each val in [1,2,3,4,5,6,7]
+                input(type="radio", name="frequency", value=val, id=val)
+                label(for=val)=" " + val
+                br
+            p Delivery email address:
+            input(type="text", name="recipientEmail")
+            //- p Select your delivery schedule:
+            //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            //-     input(type="radio", name="dayOfWeek", value=day, id=day)
+            //-     label(for=day)=" " + day
+            //-     br
+            //- br
+        br
+        div.action
+            input(type="submit", value="Submit")
