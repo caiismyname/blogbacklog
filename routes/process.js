@@ -101,8 +101,10 @@ function cleanLinks(links, baseUrl) {
         if (link.slice(0,4) !== "http") {
             link = baseUrl + link;
         }
-
-        cleanedLinks.push(link);
+        
+        if (!(cleanedLinks.includes(link))) {
+            cleanedLinks.push(link);
+        }
     }
 
     return(cleanedLinks);
