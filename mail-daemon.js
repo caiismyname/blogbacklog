@@ -56,7 +56,7 @@ async function getFeedsToSend(now) {
     const snapshot = await feedsRef.where('isActive', '==', true).get();
 
     if (snapshot.empty) {
-        console.log('No feeds to send at ', now.toISODate());
+        console.log('No feeds');
         return;
     };
 
@@ -65,7 +65,9 @@ async function getFeedsToSend(now) {
     // });
 
     let toSend = [];
+    var totalFeedsCount = 0;
     snapshot.forEach(feed => {
+        totalFeedsCount += 1;
         const feedData = feed.data();
         feedData.id = feed.id;
         if (shouldSend(
@@ -75,7 +77,9 @@ async function getFeedsToSend(now) {
                 toSend.push(feedData);
         }
     });
-    return (toSend);
+
+    console.log(toSend.length + " out of " + totalFeedsCount + " feeds are sending.");
+    return(toSend);
 }
 
 function sendMail(toSend) {
@@ -84,7 +88,7 @@ function sendMail(toSend) {
         const data = {
             from: 'Blog Backlog <send@mail.blogbacklog.com>',
             to: feed.recipientEmail,
-            subject: 'BlogBacklog — Delivery from ' + feed.sourceTitle,
+            subject: 'Delivery from ' + feed.sourceTitle,
             text: 'Your article: ' + feed.entries[0],
         };
         mg.messages().send(data, function (error, body) {
