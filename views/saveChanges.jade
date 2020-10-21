@@ -3,8 +3,9 @@ extends layout
 
 block content
     form(name="submitInfo", action="/process/createFeed", method="post")
+        input(type="hidden", name="baseUrl", value= data.baseUrl)
         h1 Here's what we found
-        p Extracted links from #{data.baseUrl}
+        p Extracted from #{data.baseUrl}
         br
         each link in data.links
              input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox

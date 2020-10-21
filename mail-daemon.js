@@ -38,7 +38,7 @@ const db = admin.firestore();
 const feedsRef = db.collection('feeds');
 
 // Receive `now` to approximate a point-in-time run across multiple invocations
-function shouldSend(lastSentString, frequency, dayOfWeek, now) {
+function shouldSend(lastSentString, frequency, now) {
     let correctDate = true; // default to true in the event that there wasn't a previous send yet
     if (lastSentString) {
         lastSent = DateTime.fromISO(lastSentString);
@@ -46,12 +46,10 @@ function shouldSend(lastSentString, frequency, dayOfWeek, now) {
 
         correctDate = now.hasSame(nextSend, 'day');
     }
-    
-    correctDayOfWeek = now.weekday === dayOfWeek; //  Luxon: 1 is Monday, 7 is Sunday
 
-    // console.log(lastSent.toISODate(), nextSend.toISODate(), correctDate, correctDayOfWeek);
+    // console.log(lastSent.toISODate(), nextSend.toISODate(), correctDate);
 
-    return (correctDate && correctDayOfWeek);
+    return (correctDate);
 }
 
 async function getFeedsToSend(now) {
@@ -62,19 +60,19 @@ async function getFeedsToSend(now) {
         return;
     };
 
-    snapshot.forEach(doc => {
-        console.log(doc.id, '=>', doc.data());
-    });
+    // snapshot.forEach(doc => {
+    //     console.log(doc.id, '=>', doc.data());
+    // });
 
     let toSend = [];
     snapshot.forEach(feed => {
-        const schedule = feed.data().schedule;
+        const feedData = feed.data();
+        feedData.id = feed.id;
         if (shouldSend(
-            schedule.lastSent,
-            schedule.frequency,
-            schedule.dayOfWeek,
+            feedData.schedule.lastSent,
+            feedData.schedule.frequency,
             now)) {
-                toSend.push(feed);
+                toSend.push(feedData);
         }
     });
     return (toSend);
@@ -82,12 +80,12 @@ async function getFeedsToSend(now) {
 
 function sendMail(toSend) {
     toSend.forEach(feed => {
-        console.log("Sending", feed.id);
+        console.log("Sending feed " + feed.id);
         const data = {
             from: 'Blog Backlog <send@mail.blogbacklog.com>',
-            to: 'davidcai2012@gmail.com',
-            subject: 'Hello',
-            text: 'Feed ID: ' + feed.id,
+            to: feed.recipientEmail,
+            subject: 'BlogBacklog — Delivery from ' + feed.sourceTitle,
+            text: 'Your article: ' + feed.entries[0],
         };
         mg.messages().send(data, function (error, body) {
             if (body) {
@@ -108,8 +106,8 @@ function createUpdatedDatabaseEntry(feed, now) {
     if (feed.entries.length === 1) {
         updatedFeed.isActive = false;
     } else {
-        // updatedFeed.schedule.lastSent = now.toISODate();
-        // updatedFeed.entries = feed.entries.slice(1);
+        updatedFeed.schedule.lastSent = now.toISODate();
+        updatedFeed.entries = feed.entries.slice(1);
     }
 
     return (updatedFeed);
@@ -122,7 +120,7 @@ async function updateDatabaseWithSend(successfulSends, now) {
     
     successfulSends.forEach(feed => {
         const feedRef = feedsRef.doc(feed.id);
-        batch.update(feedRef, createUpdatedDatabaseEntry(feed.data(), now));
+        batch.update(feedRef, createUpdatedDatabaseEntry(feed, now));
     });
 
     // Commit the batch

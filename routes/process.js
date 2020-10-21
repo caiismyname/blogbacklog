@@ -94,12 +94,20 @@ function findRoot(parsed) {
 
 function cleanLinks(links, baseUrl) {
     var cleanedLinks = [];
+    if (baseUrl.slice(-1) !== "/") {
+        baseUrl = baseUrl.concat("/");
+    }
+
     for (idx in links) {
         var link = links[idx];
         link = link.replace(" ", "");
 
         if (link.slice(0,4) !== "http") {
-            link = baseUrl + link;
+            if (link.slice(0,1) !== "/") {
+                link = baseUrl + link;
+            } else {
+                link = baseUrl + link.slice(1);
+            }
         }
         
         if (!(cleanedLinks.includes(link))) {
@@ -108,6 +116,23 @@ function cleanLinks(links, baseUrl) {
     }
 
     return(cleanedLinks);
+}
+
+function cleanTitle(baseUrl) {
+    const start = baseUrl.indexOf("://");
+    if (start === -1) {
+        return(baseUrl);
+    }
+
+    var cleaned = "";
+    var cur = start + 3;
+    while (baseUrl[cur] !== "/" && baseUrl[cur] !== "?" && cur < baseUrl.length) {
+        cleaned += baseUrl[cur];
+        cur += 1;
+    }
+
+    console.log(cleaned);
+    return(cleaned);
 }
 
 async function parseWebpage(url, callback) {
@@ -143,8 +168,8 @@ router.get('/feed', (req, res, next) => {
 
 router.post('/createFeed', async (req, res, next) => {
     const feedsRef = db.collection('feeds');
-    
-    console.log(req.body);
+    const cleanedTitle = cleanTitle(req.body.baseUrl);
+
     // const cleanedDayOfWeek = cleanDayOfWeek(req.body.dayOfWeek);
 
     await feedsRef.add({
@@ -155,6 +180,8 @@ router.post('/createFeed', async (req, res, next) => {
         lastSent: null,
       },
       recipientEmail: req.body.recipientEmail,
+      baseUrl: req.body.baseUrl,
+      sourceTitle: cleanedTitle,
       isActive: true
     }).then(
         res.render('complete', 
@@ -162,8 +189,9 @@ router.post('/createFeed', async (req, res, next) => {
                 title: 'Blog Backlog',
                 data: {
                     numLinks: req.body.links.length,
-                    recipientEmail: req.body.recipientEmail,
+                    recipientEmail: req.body.recipientEmail.trim(),
                     frequency: req.body.frequency,
+                    baseUrl: req.body.baseUrl,
                 },
             }
         )
@@ -171,7 +199,10 @@ router.post('/createFeed', async (req, res, next) => {
 });
 
 router.post('/parseUrls', async (req, res, next) => {
-    url = req.body.baseUrl;
+    var url = req.body.baseUrl.trim();
+    if (!url.includes('http')) {
+        url = 'http://' + url;
+    }
     parseWebpage(url, (cleanedLinks) => {
 
         res.render('saveChanges', 

@@ -4,10 +4,10 @@ extends layout
 block content
     h1= title
     p Welcome to #{title}.
-    p This tool allows you to delivery a series of extracted links regularly to your email, sort of like a time-shifted newsletter (but just the links, not the content behind them).
+    p This tool allows you to deliver a series of extracted links regularly to your email, sort of like a time-shifted newsletter (but just the links, not the content behind them).
     p It's particularly useful for when you discover a blog with a history that you want to enjoy, but I'm sure you'll think of other uses as well.
     hr
-    p To get started, enter the URL of the page that we'll extract links from:
+    p To get started, enter the URL of the page to extract links from — index pages of blogs work best:
     br
     form(name="inputUrl", action="/process/parseUrls", method="post")
         div.input
