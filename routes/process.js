@@ -46,7 +46,10 @@ function mergeDicts(a,b) {
     
     for (key in b) {
         if (key in result) {
-            result[key] = result[key].concat(b[key]);
+            // Convert to set, then back to list, to remove duplicates.
+            // Can't be done at traversal time because the dict at a given call doesn't
+            // have a full view of _all_ items at that depth.
+            result[key] = [ ... new Set(result[key].concat(b[key]))];
         } else {
             result[key] = b[key];
         }
@@ -56,15 +59,22 @@ function mergeDicts(a,b) {
 }
 
 function traverser(node, depth) {
-    // console.log("Traversing ---------------");
     var res = {};   // key = depth, val = list of links found at that depth
                     // Use a dict to avoid a sparse array.
 
     for (childIdx in node.children) {
         const child = node.children[childIdx];
-        // console.log(child.name);
-        // console.log(child.type);
-        if (child.name === 'a') {
+        console.log("-----");
+        console.log(child.name);
+        console.log(child.type);
+        // console.log(child);
+
+        // If we can detect headers, that'd cut out a lot of noise
+        // if (child.name === 'header') {
+        //     continue;
+        // }
+
+        if (child.name === 'a' && child.attribs.href) {
             // console.log(child.attribs);
             if (depth in res) {
                 res[depth].push(child.attribs.href);
@@ -76,7 +86,6 @@ function traverser(node, depth) {
 
         res = mergeDicts(res, childrenResults);
     }
-
     return(res);
 }
 
@@ -100,8 +109,32 @@ function cleanLinks(links, baseUrl) {
 
     for (idx in links) {
         var link = links[idx];
-        link = link.replace(" ", "");
 
+        // Replace any strange characters
+        const toReplace = {
+            " ": "",
+            "&#x2F;": "/",
+        };
+
+        for (const key in toReplace) {
+            link = link.replace(key, toReplace[key]);
+        }
+
+        // Check for non-links
+        var broke = false;
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:"];
+        for (item of banned) {
+            if (link.includes(item)) {
+                console.log(link, item);
+                broke = true;
+                break;
+            }
+        }
+        if (broke) {
+            continue;
+        }
+
+        // Ensure all links are full URL
         if (link.slice(0,4) !== "http") {
             if (link.slice(0,1) !== "/") {
                 link = baseUrl + link;
@@ -113,6 +146,11 @@ function cleanLinks(links, baseUrl) {
         if (!(cleanedLinks.includes(link))) {
             cleanedLinks.push(link);
         }
+    }
+
+    // If there's a self-link, remove it
+    if (cleanedLinks.includes(baseUrl)) {
+        cleanedLinks.splice(cleanedLinks.indexOf(baseUrl), 1);
     }
 
     return(cleanedLinks);
@@ -136,13 +174,22 @@ function cleanTitle(baseUrl) {
 }
 
 async function parseWebpage(url, callback) {
-    request(url, (err, res, body) => {
+    const options = {
+        'url' : url,
+        headers: {
+            'User-Agent': 'request'
+        }
+    };
+    request(options, (err, res, body) => {
         const nodes = findRoot(domParser(body));
         var foundLinks = {};
 
         for (node of nodes) {
+            console.log("New Node -------");
             foundLinks = mergeDicts(foundLinks, traverser(node, 0));
         }
+
+        console.log(foundLinks);
 
         var candidateLinks = [];
         var maxFoundLength = -1;
