@@ -4,6 +4,7 @@ const { DateTime } = require('luxon');
 var domParser = require('html-dom-parser');
 const request = require('request'); // Anyone know if these should be var or const?
 const dotenv = require("dotenv");
+var logStatus = true;
 
 // Firebase Initialization
 const admin = require('firebase-admin');
@@ -64,11 +65,13 @@ function traverser(node, depth) {
 
     for (childIdx in node.children) {
         const child = node.children[childIdx];
-        // console.log("-----");
-        // console.log(child.name);
-        // console.log(child.type);
-        // console.log(child.attribs);
-        // console.log(child);
+        if (logStatus) {
+            // console.log("-----");
+            // console.log(child.name);
+            // console.log(child.type);
+            // console.log(child.attribs);
+            // console.log(child);
+        }
 
         if (!child.attribs) {
             continue;
@@ -81,7 +84,6 @@ function traverser(node, depth) {
 
         for (section of sections) {
             if (section in child.attribs) {
-                // console.log(child.attribs.class);
                 for (item of extraneous) {
                     if (child.attribs[section].toLowerCase().includes(item)) {
                         broke = true;
@@ -149,7 +151,7 @@ function cleanLinks(links, baseUrl) {
         const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin"];
         for (item of banned) {
             if (link.includes(item)) {
-                // console.log(link, item);
+                // if (logStatus) { console.log(link, item); };
                 broke = true;
                 break;
             }
@@ -193,7 +195,7 @@ function cleanTitle(baseUrl) {
         cur += 1;
     }
 
-    // console.log(cleaned);
+    if (logStatus) { console.log(cleaned); };
     return(cleaned);
 }
 
@@ -211,8 +213,9 @@ async function parseWebpage(url, callback) {
         for (node of nodes) {
             foundLinks = mergeDicts(foundLinks, traverser(node, 0));
         }
-
-        console.log(foundLinks);
+        
+        if (logStatus) { console.log(foundLinks); }
+        
 
         var candidateLinks = [];
         var maxFoundLength = -1;
@@ -225,7 +228,7 @@ async function parseWebpage(url, callback) {
         }
 
         const cleanedLinks = cleanLinks(candidateLinks, url);
-        console.log(cleanedLinks);
+        if (logStatus) { console.log(cleanedLinks); };
         callback(cleanedLinks);
     });
 }
@@ -287,4 +290,11 @@ router.post('/parseUrls', async (req, res, next) => {
     });
 });
 
-module.exports = router;
+
+function setLogStatus(status) {
+    logStatus = status;
+}
+
+exports.processRouter = router;
+exports.processFunc = (url, callback) => {parseWebpage(url, callback)};
+exports.setLogStatus = (status) => {setLogStatus(status)};

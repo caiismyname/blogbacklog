@@ -10,8 +10,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const app = express();
-var indexRouter = require('./routes/index');
-var processRouter = require('./routes/process');
+ indexRouter = require('./routes/index');
+const { processRouter } = require('./routes/process');
 
 // App + Router initialization
 
