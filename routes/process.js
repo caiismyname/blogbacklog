@@ -36,95 +36,36 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-// Helpers
+//
+// Helpers and Cleaners
+//
+
+const parentTypes = {
+    HEADER: 'header',
+    PARAGRAPH: 'paragraph',
+    UNKNOWN: 'unknown',
+    LI: 'li',
+};
+
 function cleanDayOfWeek(dayString) {
     return(DateTime.fromFormat(dayString, "EEEE").weekday);
 }
 
-// Merges two dicts assuming values are all lists
-function mergeDicts(a,b) {
-    const result = { ...a};
-    
-    for (key in b) {
-        if (key in result) {
-            // Convert to set, then back to list, to remove duplicates.
-            // Can't be done at traversal time because the dict at a given call doesn't
-            // have a full view of _all_ items at that depth.
-            result[key] = [ ... new Set(result[key].concat(b[key]))];
-        } else {
-            result[key] = b[key];
-        }
+function cleanTitle(baseUrl) {
+    const start = baseUrl.indexOf("://");
+    if (start === -1) {
+        return(baseUrl);
     }
 
-    return(result);
-}
-
-function traverser(node, depth) {
-    var res = {};   // key = depth, val = list of links found at that depth
-                    // Use a dict to avoid a sparse array.
-
-    for (childIdx in node.children) {
-        const child = node.children[childIdx];
-        if (logStatus) {
-            // console.log("-----");
-            // console.log(child.name);
-            // console.log(child.type);
-            // console.log(child.attribs);
-            // console.log(child);
-        }
-
-        if (!child.attribs) {
-            continue;
-        }
-
-        // If we can detect headers / sidebars, that'd cut out a lot of noise
-        const sections = ['class', 'id', 'role'];
-        const extraneous = ['sidebar', 'nav', 'footer', 'tag'];
-        var broke = false;
-
-        for (section of sections) {
-            if (section in child.attribs) {
-                for (item of extraneous) {
-                    if (child.attribs[section].toLowerCase().includes(item)) {
-                        broke = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (child.name === 'p') {
-            broke = true;
-        }
-
-        if (broke) {
-            continue;
-        }
-
-        if (child.name === 'a' && child.attribs.href) {
-            if (depth in res) {
-                res[depth].push(child.attribs.href);
-            } else {
-                res[depth] = [child.attribs.href];
-            }
-        }
-        const childrenResults = traverser(child, depth + 1);
-
-        res = mergeDicts(res, childrenResults);
-    }
-    return(res);
-}
-
-function findRoot(parsed) {
-    var candidates = [];
-
-    for (item of parsed) {
-        if ('children' in item) {
-            candidates.push(item);
-        }
+    var cleaned = "";
+    var cur = start + 3;
+    while (baseUrl[cur] !== "/" && baseUrl[cur] !== "?" && cur < baseUrl.length) {
+        cleaned += baseUrl[cur];
+        cur += 1;
     }
 
-    return(candidates);
+    if (logStatus) { console.log(cleaned); };
+    return(cleaned);
 }
 
 function cleanLinks(links, baseUrl) {
@@ -182,21 +123,102 @@ function cleanLinks(links, baseUrl) {
     return(cleanedLinks);
 }
 
-function cleanTitle(baseUrl) {
-    const start = baseUrl.indexOf("://");
-    if (start === -1) {
-        return(baseUrl);
+// Merges two dicts
+function mergeDicts(a,b) {
+    const result = { ...a};
+    
+    for (key in b) {
+        if (key in result) {
+            continue;
+        } else {
+            result[key] = b[key];
+        }
     }
 
-    var cleaned = "";
-    var cur = start + 3;
-    while (baseUrl[cur] !== "/" && baseUrl[cur] !== "?" && cur < baseUrl.length) {
-        cleaned += baseUrl[cur];
-        cur += 1;
+    return(result);
+}
+
+//
+// Link finders
+//
+
+function findRoot(parsed) {
+    var candidates = [];
+
+    for (item of parsed) {
+        if ('children' in item) {
+            candidates.push(item);
+        }
     }
 
-    if (logStatus) { console.log(cleaned); };
-    return(cleaned);
+    return(candidates);
+}
+
+function traverser(node, depth, parentName) {
+    var res = {};
+
+    // First, check if current node is a link
+    if (!node.attribs) {
+        return(res);
+    }
+
+    if (node.name === 'a' && node.attribs.href) {
+        if (!(node.attribs.href in res)) {
+            res[node.attribs.href] = {
+                'depth': depth,
+                'attribs': node.attribs,
+                'url': node.attribs.href,
+                'parentName': parentName,
+                'scoring': {
+                    'score': 0,
+                    'depthFrequencyRanking': 0,
+                    'containsBannedWords': false,
+                    'containsHeader': false,
+                }
+            };
+        }
+    }
+
+    if (logStatus) {
+        // console.log("-----");
+        // console.log(node.name);
+        // console.log(node.type);
+        // console.log(node.attribs);
+        // console.log(node);
+    }
+
+    // Then, recursive call on children to check if they contain links
+
+    var newParentName = parentName;
+    const headerTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+    if (newParentName === parentTypes.UNKNOWN) {
+        if (headerTags.includes(node.name)) {
+            newParentName = parentTypes.HEADER;
+        } else if (node.name === 'p') {
+            newParentName = parentTypes.PARAGRAPH;
+        } else if (node.name === 'li') {
+            newParentName = parentTypes.LI;
+        }
+    }
+
+    for (childIdx in node.children) {
+        const child = node.children[childIdx];
+
+        var childrenResults = traverser(child, depth + 1, newParentName);
+
+                 // As a heuristic, most "title" elements where the link to a post is held will only have one link.
+        // If multiple are discovered, it's like in the body of an excerpt of post itself.
+        // var numLinksInDirectChildren = 0;
+        // const directChildrenLinks = {};
+
+        // if (numLinksInDirectChildren > 0) {
+        //     childrenResults = mergeDicts(directChildrenLinks, childrenResults);
+        // }
+
+        res = mergeDicts(res, childrenResults);
+    }
+
+    return(res);
 }
 
 async function parseWebpage(url, callback) {
@@ -208,29 +230,94 @@ async function parseWebpage(url, callback) {
     };
     request(options, (err, res, body) => {
         const nodes = findRoot(domParser(body));
-        var foundLinks = {};
+        var foundLinks = {}; // dict of [link: weight]
 
         for (node of nodes) {
-            foundLinks = mergeDicts(foundLinks, traverser(node, 0));
+            foundLinks = mergeDicts(foundLinks, traverser(node, 0, parentTypes.UNKNOWN));
         }
         
-        if (logStatus) { console.log(foundLinks); }
+        // if (logStatus) { console.log(foundLinks); }
         
+        foundLinks = scoreBannedContent(foundLinks);
+        foundLinks = scoreDepthSiblings(foundLinks);
 
-        var candidateLinks = [];
-        var maxFoundLength = -1;
+        // const cleanedLinks = cleanLinks(foundLinks, url);
+        if (logStatus) { console.log(foundLinks); };
 
-        for (key in foundLinks) {
-            if (foundLinks[key].length > maxFoundLength) {
-                candidateLinks = foundLinks[key];
-                maxFoundLength = foundLinks[key].length;
+        callback(foundLinks);
+    });
+}
+
+//
+// Link Scorers
+//
+
+function scoreBannedContent(links) {
+    var newLinks = { ... links};
+
+    // If we can detect headers / sidebars, that'd cut out a lot of noise
+    const sections = ['class', 'id', 'role'];
+    const extraneous = ['sidebar', 'nav', 'footer', 'tag'];
+
+    for (const link in newLinks) {
+        for (const section of sections) {
+            const linkData = links[link];
+            if (section in linkData.attribs) {
+                for (item of extraneous) {
+                    if (linkData.attribs[section].toLowerCase().includes(item)) {
+                        linkData.scoring.containsBannedWords = true;
+                    }
+                }
+
+                if (linkData.attribs[section].toLowerCase().includes('header')) {
+                    linkData.scoring.containsHeader = true;
+                }
             }
         }
+    }
 
-        const cleanedLinks = cleanLinks(candidateLinks, url);
-        if (logStatus) { console.log(cleanedLinks); };
-        callback(cleanedLinks);
-    });
+    return (newLinks);
+}
+
+function scoreDepthSiblings(links) {
+    var depthMap = {};
+    var newLinks = { ... links};
+
+    // First pass to build depthMap
+    for (const link in newLinks) {
+        const linkData = newLinks[link];
+
+        if (linkData.depth in depthMap) {
+            depthMap[linkData.depth] = depthMap[linkData.depth] + 1;
+        } else {
+            depthMap[linkData.depth] = 1;
+        }
+    }
+
+    // Convert depthMap to relative ranking, ordered most to least frequent
+    var depthsByFrequency = [];
+    for (const depth in depthMap) {
+        depthsByFrequency.push({
+            'key': depth,
+            'value': depthMap[depth]
+        });
+    }
+    depthsByFrequency = depthsByFrequency.sort((a,b) => {return(a['value'] - b['value'])});
+    depthsByFrequency = depthsByFrequency.map((x) => {return(parseInt(x['key']))});
+    depthsByFrequency.reverse();
+
+    // Add depthFrequencyRanking to each link
+    for (const link in newLinks) {
+        newLinks[link].scoring.depthFrequencyRanking = depthsByFrequency.indexOf(newLinks[link]['depth']) + 1;
+    }
+
+    return (newLinks);
+}
+
+function score(links) {
+    for (const link in links) {
+
+    }
 }
 
 // Routes

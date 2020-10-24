@@ -50,5 +50,36 @@
         "https://apmmap.substack.com/p/apm-map-issue-3-on-finding-yourself",
         "https://apmmap.substack.com/p/issue-2-the-roadmap-to-apm-recruiting",
         "https://apmmap.substack.com/p/issue-1-welcome-to-apm-map-"
+    ],
+    "http://fbrnc.net": [
+        "http://fbrnc.net/blog/2016/05/green-blue-deployments-with-aws-lambda-and-cloudformation",
+        "http://fbrnc.net/blog/2016/03/messaging-on-aws",
+        "http://fbrnc.net/blog/2016/03/immutable-infrastructure-cloudformation",
+        "http://fbrnc.net/blog/2016/03/continuous-load-testing",
+        "http://fbrnc.net/blog/2016/01/whats-wrong-with-aws-opsworks"
+    ],
+    "https://computer.forensikblog.de/en/": [
+        "https://computer.forensikblog.de/en/2011/11/evtx-parser-1-1-1.html",
+        "https://computer.forensikblog.de/en/2011/11/dfrws-2012.html",
+        "https://computer.forensikblog.de/en/2011/11/evtx-parser-version-110.html",
+        "https://computer.forensikblog.de/en/2011/10/timers-and-times.html",
+        "https://computer.forensikblog.de/en/2011/06/evtx-parser-version-108.html",
+        "https://computer.forensikblog.de/en/2011/06/mac-os-x-memory-analysis-with-volafox.html",
+        "https://computer.forensikblog.de/en/2011/02/evtx-parser-version-107.html",
+        "https://computer.forensikblog.de/en/2010/10/recent-advances-in-memory-forensics.html",
+        "https://computer.forensikblog.de/en/2010/10/linking-event-messages-and-resource-dlls.html",
+        "https://computer.forensikblog.de/en/2010/08/carvfs-on-a-mac.html"
+    ],
+    "https://stratechery.com/category/articles/": [
+        "https://stratechery.com/2020/united-states-v-google/",
+        "https://stratechery.com/2020/twitter-responsibility-and-accountability/",
+        "https://stratechery.com/2020/disneys-integration/",
+        "https://stratechery.com/2020/anti-monopoly-vs-antitrust/",
+        "https://stratechery.com/2020/2020-bundles/",
+        "https://stratechery.com/2020/nvidias-integration-dreams/",
+        "https://stratechery.com/2020/rethinking-the-app-store/",
+        "https://stratechery.com/2020/apple-epic-and-the-app-store/",
+        "https://stratechery.com/2020/antitrust-politics/",
+        "https://stratechery.com/2020/india-jio-and-the-four-internets/"
     ]
 }

@@ -45,5 +45,7 @@ for (const site in testSites) {
         if (overcapture.length === 0 && missed.length === 0) {
             console.log("\tALL GOOD");
         }
+
+        console.log("\n")
     })
 }
