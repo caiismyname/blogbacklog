@@ -64,18 +64,42 @@ function traverser(node, depth) {
 
     for (childIdx in node.children) {
         const child = node.children[childIdx];
-        console.log("-----");
-        console.log(child.name);
-        console.log(child.type);
+        // console.log("-----");
+        // console.log(child.name);
+        // console.log(child.type);
+        // console.log(child.attribs);
         // console.log(child);
 
-        // If we can detect headers, that'd cut out a lot of noise
-        // if (child.name === 'header') {
-        //     continue;
-        // }
+        if (!child.attribs) {
+            continue;
+        }
+
+        // If we can detect headers / sidebars, that'd cut out a lot of noise
+        const sections = ['class', 'id', 'role'];
+        const extraneous = ['sidebar', 'nav', 'footer', 'tag'];
+        var broke = false;
+
+        for (section of sections) {
+            if (section in child.attribs) {
+                // console.log(child.attribs.class);
+                for (item of extraneous) {
+                    if (child.attribs[section].toLowerCase().includes(item)) {
+                        broke = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (child.name === 'p') {
+            broke = true;
+        }
+
+        if (broke) {
+            continue;
+        }
 
         if (child.name === 'a' && child.attribs.href) {
-            // console.log(child.attribs);
             if (depth in res) {
                 res[depth].push(child.attribs.href);
             } else {
@@ -122,10 +146,10 @@ function cleanLinks(links, baseUrl) {
 
         // Check for non-links
         var broke = false;
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:"];
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin"];
         for (item of banned) {
             if (link.includes(item)) {
-                console.log(link, item);
+                // console.log(link, item);
                 broke = true;
                 break;
             }
@@ -169,7 +193,7 @@ function cleanTitle(baseUrl) {
         cur += 1;
     }
 
-    console.log(cleaned);
+    // console.log(cleaned);
     return(cleaned);
 }
 
@@ -185,7 +209,6 @@ async function parseWebpage(url, callback) {
         var foundLinks = {};
 
         for (node of nodes) {
-            console.log("New Node -------");
             foundLinks = mergeDicts(foundLinks, traverser(node, 0));
         }
 
