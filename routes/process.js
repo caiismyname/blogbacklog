@@ -3,8 +3,9 @@ var router = express.Router();
 const { DateTime } = require('luxon');
 var domParser = require('html-dom-parser');
 const request = require('request'); // Anyone know if these should be var or const?
-const dotenv = require("dotenv");
+const dotenv = require('dotenv');
 var logStatus = true;
+const scoringWeights = require('./scoring-weights.json');
 
 // Firebase Initialization
 const admin = require('firebase-admin');
@@ -51,7 +52,7 @@ function cleanDayOfWeek(dayString) {
     return(DateTime.fromFormat(dayString, "EEEE").weekday);
 }
 
-function cleanTitle(baseUrl) {
+function extractBaseTitle(baseUrl) {
     const start = baseUrl.indexOf("://");
     if (start === -1) {
         return(baseUrl);
@@ -64,17 +65,13 @@ function cleanTitle(baseUrl) {
         cur += 1;
     }
 
-    if (logStatus) { console.log(cleaned); };
     return(cleaned);
 }
 
-function cleanLinks(links, baseUrl) {
+function cleanLinks(links) {
     var cleanedLinks = [];
-    if (baseUrl.slice(-1) !== "/") {
-        baseUrl = baseUrl.concat("/");
-    }
 
-    for (idx in links) {
+    for (const idx in links) {
         var link = links[idx];
 
         // Replace any strange characters
@@ -84,14 +81,14 @@ function cleanLinks(links, baseUrl) {
         };
 
         for (const key in toReplace) {
-            link = link.replace(key, toReplace[key]);
+            link.url = link.url.replace(key, toReplace[key]);
         }
 
         // Check for non-links
         var broke = false;
         const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin"];
         for (item of banned) {
-            if (link.includes(item)) {
+            if (link.url.includes(item)) {
                 // if (logStatus) { console.log(link, item); };
                 broke = true;
                 break;
@@ -100,27 +97,41 @@ function cleanLinks(links, baseUrl) {
         if (broke) {
             continue;
         }
-
-        // Ensure all links are full URL
-        if (link.slice(0,4) !== "http") {
-            if (link.slice(0,1) !== "/") {
-                link = baseUrl + link;
-            } else {
-                link = baseUrl + link.slice(1);
-            }
-        }
         
+        // Remove duplicates
         if (!(cleanedLinks.includes(link))) {
             cleanedLinks.push(link);
         }
     }
 
-    // If there's a self-link, remove it
-    if (cleanedLinks.includes(baseUrl)) {
-        cleanedLinks.splice(cleanedLinks.indexOf(baseUrl), 1);
-    }
+    // // If there's a self-link, remove it
+    // if (cleanedLinks.includes(baseUrl)) {
+    //     cleanedLinks.splice(cleanedLinks.indexOf(baseUrl), 1);
+    // }
 
     return(cleanedLinks);
+}
+
+// Post-processing on cleaned links to ensure they are all full URLs
+function formatLinks(links, baseUrl) {
+    var newBaseUrl = baseUrl;
+    if (newBaseUrl.slice(-1) !== "/") {
+        newBaseUrl = newBaseUrl.concat("/");
+    }
+
+    var newLinks = links.map((link) => {
+        if (link.url.slice(0,4) !== "http") {
+            if (link.url.slice(0,1) !== "/") {
+                link.url = newBaseUrl + link.url;
+            } else {
+                link.url = newBaseUrl + link.url.slice(1);
+            }
+        }
+
+        return (link);
+    });
+
+    return (newLinks);
 }
 
 // Merges two dicts
@@ -154,7 +165,35 @@ function findRoot(parsed) {
     return(candidates);
 }
 
-function traverser(node, depth, parentName) {
+function detectBannedContent(attribs) {
+    // Detect headers / sidebars
+    const sections = ['class', 'id', 'role'];
+    const extraneous = ['sidebar', 'nav', 'footer', 'tag'];
+
+    var containsBannedWords = false;
+    var containsHeader = false;
+
+    for (const section of sections) {
+        if (section in attribs) {
+            for (item of extraneous) {
+                if (attribs[section].toLowerCase().includes(item)) {
+                    containsBannedWords = true;
+                }
+            }
+
+            if (attribs[section].toLowerCase().includes('header')) {
+                containsHeader = true;
+            }
+        }
+    }
+
+    return ({
+        'containsBannedWords': containsBannedWords,
+        'containsHeader': containsHeader,
+    });
+}
+
+function traverser(node, depth, parentName, containsBannedWords, containsHeader) {
     var res = {};
 
     // First, check if current node is a link
@@ -168,12 +207,13 @@ function traverser(node, depth, parentName) {
                 'depth': depth,
                 'attribs': node.attribs,
                 'url': node.attribs.href,
-                'parentName': parentName,
                 'scoring': {
                     'score': 0,
                     'depthFrequencyRanking': 0,
-                    'containsBannedWords': false,
-                    'containsHeader': false,
+                    'containsBannedWords': containsBannedWords,
+                    'containsHeader': containsHeader,
+                    'parentName': parentName,
+                    'similarToBaseUrl': false,
                 }
             };
         }
@@ -200,11 +240,14 @@ function traverser(node, depth, parentName) {
             newParentName = parentTypes.LI;
         }
     }
+    
+    var { containsBannedWords, containsHeader } = detectBannedContent(node.attribs);
+
 
     for (childIdx in node.children) {
         const child = node.children[childIdx];
 
-        var childrenResults = traverser(child, depth + 1, newParentName);
+        var childrenResults = traverser(child, depth + 1, newParentName, containsBannedWords, containsHeader);
 
                  // As a heuristic, most "title" elements where the link to a post is held will only have one link.
         // If multiple are discovered, it's like in the body of an excerpt of post itself.
@@ -238,13 +281,17 @@ async function parseWebpage(url, callback) {
         
         // if (logStatus) { console.log(foundLinks); }
         
-        foundLinks = scoreBannedContent(foundLinks);
-        foundLinks = scoreDepthSiblings(foundLinks);
+        const cleanedLinks = cleanLinks(foundLinks); // TODO converting dict to list needs to be moved out of this step
+        const scoredLinks = score(cleanedLinks, url);
+        // console.log("scored", scoredLinks);
+        const chosenLinks = pickLinks(scoredLinks);
+        const formattedLinks = formatLinks(chosenLinks, url);
 
-        // const cleanedLinks = cleanLinks(foundLinks, url);
-        if (logStatus) { console.log(foundLinks); };
+        const extractedLinks = formattedLinks.map((link) => {return(link.url)});
+        
+        if (logStatus) { console.log("Extracted Links:", extractedLinks); };
 
-        callback(foundLinks);
+        callback(extractedLinks);
     });
 }
 
@@ -252,36 +299,9 @@ async function parseWebpage(url, callback) {
 // Link Scorers
 //
 
-function scoreBannedContent(links) {
-    var newLinks = { ... links};
-
-    // If we can detect headers / sidebars, that'd cut out a lot of noise
-    const sections = ['class', 'id', 'role'];
-    const extraneous = ['sidebar', 'nav', 'footer', 'tag'];
-
-    for (const link in newLinks) {
-        for (const section of sections) {
-            const linkData = links[link];
-            if (section in linkData.attribs) {
-                for (item of extraneous) {
-                    if (linkData.attribs[section].toLowerCase().includes(item)) {
-                        linkData.scoring.containsBannedWords = true;
-                    }
-                }
-
-                if (linkData.attribs[section].toLowerCase().includes('header')) {
-                    linkData.scoring.containsHeader = true;
-                }
-            }
-        }
-    }
-
-    return (newLinks);
-}
-
 function scoreDepthSiblings(links) {
     var depthMap = {};
-    var newLinks = { ... links};
+    var newLinks = [ ... links];
 
     // First pass to build depthMap
     for (const link in newLinks) {
@@ -314,10 +334,66 @@ function scoreDepthSiblings(links) {
     return (newLinks);
 }
 
-function score(links) {
-    for (const link in links) {
+function scoreBaseUrlSimilarity(links, baseUrl) {
+    var newLinks = [ ... links];
+    const baseTitle = extractBaseTitle(baseUrl);
 
+    for (const link in newLinks) {
+        const linkData = newLinks[link];
+        
+        if (linkData.url.slice(0,1) === "/") {
+            linkData.scoring.similarToBaseUrl = true;
+        } else if (linkData.url.includes(baseTitle)) {
+            linkData.scoring.similarToBaseUrl = true;
+        } else {
+            linkData.scoring.similarToBaseUrl = false;
+        }
     }
+
+    return (newLinks);
+}
+
+function score(links, baseUrl) {
+    // Lower is better
+    var scoredLinks = [ ... links];
+
+    // Run scoring functions
+    scoredLinks = scoreDepthSiblings(scoredLinks);
+    scoredLinks = scoreBaseUrlSimilarity(scoredLinks, baseUrl);
+
+    // Compute total score
+    for (const link in scoredLinks) {
+        const linkData = scoredLinks[link];
+
+        var score = 0;
+        score += scoringWeights.depthFrequencyRanking * linkData.scoring.depthFrequencyRanking;
+        score += scoringWeights.containsBannedWords * (linkData.scoring.containsBannedWords ? 1 : 0);
+        score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
+        score += scoringWeights.similarToBaseUrl * (linkData.scoring.similarToBaseUrl ? 0 : 1);
+        score += scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.PARAGRAPH ? 1 : 0);
+
+        linkData.scoring.score = score;
+    }
+
+    return (scoredLinks);
+}
+
+function pickLinks(links) {
+    var chosenLinks = [];
+    var scoreDistribution = links
+        .map((link) => {return(link.scoring.score);});
+
+
+    const scoreThreshold = scoreDistribution.reduce((acc, score) => {
+        return (score < acc)  ? score : acc;
+    }, 100);
+
+    // console.log("Score Distribution", scoreDistribution);
+    // console.log("Score Threshold", scoreThreshold);
+
+    chosenLinks = links.filter((link) => {return(link.scoring.score <= scoreThreshold)});
+    
+    return (chosenLinks);
 }
 
 // Routes
@@ -328,7 +404,7 @@ router.get('/feed', (req, res, next) => {
 
 router.post('/createFeed', async (req, res, next) => {
     const feedsRef = db.collection('feeds');
-    const cleanedTitle = cleanTitle(req.body.baseUrl);
+    const cleanedTitle = extractBaseTitle(req.body.baseUrl);
 
     // const cleanedDayOfWeek = cleanDayOfWeek(req.body.dayOfWeek);
 

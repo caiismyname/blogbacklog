@@ -1,0 +1,8 @@
+{
+    "depthFrequencyRanking": 0.5,
+    "containsBannedWords": 0.2,
+    "containsHeader": 0.1,
+    "similarToBaseUrl": 0.1,
+    "parentName": 0.1,
+    "multipleChildren": 0.00
+}
