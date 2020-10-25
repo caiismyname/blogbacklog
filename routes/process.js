@@ -86,7 +86,7 @@ function cleanLinks(links) {
 
         // Check for non-links
         var broke = false;
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin"];
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin", "javascript:void(0)"];
         for (item of banned) {
             if (link.url.includes(item)) {
                 // if (logStatus) { console.log(link, item); };
@@ -99,9 +99,11 @@ function cleanLinks(links) {
         }
         
         // Remove duplicates
-        if (!(cleanedLinks.includes(link))) {
-            cleanedLinks.push(link);
-        }
+        // if (!(cleanedLinks.includes(link))) {
+        //     cleanedLinks.push(link);
+        // }
+
+        cleanedLinks.push(link);
     }
 
     // // If there's a self-link, remove it
@@ -231,7 +233,7 @@ function traverser(node, depth, parentName, containsBannedWords, containsHeader)
 
     var newParentName = parentName;
     const headerTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-    if (newParentName === parentTypes.UNKNOWN) {
+    if (newParentName === parentTypes.UNKNOWN || newParentName === parentTypes.LI) {
         if (headerTags.includes(node.name)) {
             newParentName = parentTypes.HEADER;
         } else if (node.name === 'p') {
@@ -241,13 +243,17 @@ function traverser(node, depth, parentName, containsBannedWords, containsHeader)
         }
     }
     
-    var { containsBannedWords, containsHeader } = detectBannedContent(node.attribs);
+    var newContainsBannedWords = containsBannedWords;
+    var newContainsHeader = containsHeader;
 
+    const detection = detectBannedContent(node.attribs);
+    newContainsBannedWords = detection.containsBannedWords || containsBannedWords;
+    newContainsHeader = detection.containsHeader || containsHeader;
 
     for (childIdx in node.children) {
         const child = node.children[childIdx];
 
-        var childrenResults = traverser(child, depth + 1, newParentName, containsBannedWords, containsHeader);
+        var childrenResults = traverser(child, depth + 1, newParentName, newContainsBannedWords, newContainsHeader);
 
                  // As a heuristic, most "title" elements where the link to a post is held will only have one link.
         // If multiple are discovered, it's like in the body of an excerpt of post itself.
@@ -276,14 +282,14 @@ async function parseWebpage(url, callback) {
         var foundLinks = {}; // dict of [link: weight]
 
         for (node of nodes) {
-            foundLinks = mergeDicts(foundLinks, traverser(node, 0, parentTypes.UNKNOWN));
+            foundLinks = mergeDicts(foundLinks, traverser(node, 0, parentTypes.UNKNOWN, false, false));
         }
         
         // if (logStatus) { console.log(foundLinks); }
         
         const cleanedLinks = cleanLinks(foundLinks); // TODO converting dict to list needs to be moved out of this step
         const scoredLinks = score(cleanedLinks, url);
-        // console.log("scored", scoredLinks);
+        if (logStatus) { console.log("scored", scoredLinks); };
         const chosenLinks = pickLinks(scoredLinks);
         const formattedLinks = formatLinks(chosenLinks, url);
 
@@ -307,10 +313,18 @@ function scoreDepthSiblings(links) {
     for (const link in newLinks) {
         const linkData = newLinks[link];
 
-        if (linkData.depth in depthMap) {
-            depthMap[linkData.depth] = depthMap[linkData.depth] + 1;
+        var value = 0;
+
+        if (linkData.scoring.containsBannedWords) {
+            value = .3;
         } else {
-            depthMap[linkData.depth] = 1;
+            value = 1;
+        }
+
+        if (linkData.depth in depthMap) {
+            depthMap[linkData.depth] = depthMap[linkData.depth] + value;
+        } else {
+            depthMap[linkData.depth] = value;
         }
     }
 
@@ -328,7 +342,11 @@ function scoreDepthSiblings(links) {
 
     // Add depthFrequencyRanking to each link
     for (const link in newLinks) {
-        newLinks[link].scoring.depthFrequencyRanking = depthsByFrequency.indexOf(newLinks[link]['depth']) + 1;
+        var score = depthsByFrequency.indexOf(newLinks[link]['depth']) + 1;
+        if (score > 2) {
+            score = 2
+        }
+        newLinks[link].scoring.depthFrequencyRanking = score;
     }
 
     return (newLinks);
@@ -367,10 +385,13 @@ function score(links, baseUrl) {
 
         var score = 0;
         score += scoringWeights.depthFrequencyRanking * linkData.scoring.depthFrequencyRanking;
-        score += scoringWeights.containsBannedWords * (linkData.scoring.containsBannedWords ? 1 : 0);
-        score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
+        score += scoringWeights.containsBannedWords * (linkData.scoring.containsBannedWords ? 5 : 0);
         score += scoringWeights.similarToBaseUrl * (linkData.scoring.similarToBaseUrl ? 0 : 1);
         score += scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.PARAGRAPH ? 1 : 0);
+        score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.HEADER ? 1 : 0);
+        if (linkData.scoring.parentName !== parentTypes.HEADER) {
+            score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
+        }
 
         linkData.scoring.score = score;
     }
@@ -384,12 +405,15 @@ function pickLinks(links) {
         .map((link) => {return(link.scoring.score);});
 
 
-    const scoreThreshold = scoreDistribution.reduce((acc, score) => {
+    var scoreThreshold = scoreDistribution.reduce((acc, score) => {
         return (score < acc)  ? score : acc;
     }, 100);
 
-    // console.log("Score Distribution", scoreDistribution);
-    // console.log("Score Threshold", scoreThreshold);
+    if (logStatus) {
+        console.log("Score Distribution", scoreDistribution);
+        console.log("Score Threshold fuzz", scoreThresholdFuzz);
+        console.log("Score Threshold", scoreThreshold);
+    }
 
     chosenLinks = links.filter((link) => {return(link.scoring.score <= scoreThreshold)});
     

@@ -26,3 +26,4 @@ http://www.practicallyefficient.com/
 https://www.igvita.com/archives/
 http://www.brendangregg.com/blog/
 http://fbrnc.net
+https://stratechery.com

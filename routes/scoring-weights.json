@@ -1,8 +1,8 @@
 {
-    "depthFrequencyRanking": 0.5,
+    "depthFrequencyRanking": 0.2,
     "containsBannedWords": 0.2,
-    "containsHeader": 0.1,
-    "similarToBaseUrl": 0.1,
-    "parentName": 0.1,
+    "containsHeader": 0.2,
+    "similarToBaseUrl": 0.2,
+    "parentName": 0.2,
     "multipleChildren": 0.00
 }

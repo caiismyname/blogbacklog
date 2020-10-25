@@ -81,5 +81,33 @@
         "https://stratechery.com/2020/apple-epic-and-the-app-store/",
         "https://stratechery.com/2020/antitrust-politics/",
         "https://stratechery.com/2020/india-jio-and-the-four-internets/"
+    ],
+    "https://davidwalsh.name": [
+        "https://davidwalsh.name/cookiestore",
+        "https://davidwalsh.name/prevent-paste",
+        "https://davidwalsh.name/sports-data-for-developers-sportdataapi",
+        "https://davidwalsh.name/leaving-mozilla",
+        "https://davidwalsh.name/mediastack",
+        "https://davidwalsh.name/async-function-class",
+        "https://davidwalsh.name/detect-sticky",
+        "https://davidwalsh.name/shoelace-css-2",
+        "https://davidwalsh.name/get-default-branch-name",
+        "https://davidwalsh.name/vital-web-performance",
+        "https://davidwalsh.name/bitcoin-tips",
+        "https://davidwalsh.name/pornhub-interview",
+        "https://davidwalsh.name/new-office",
+        "https://davidwalsh.name/retropie-graphical-guide",
+        "https://davidwalsh.name/conquering-impostor-syndrome",
+        "https://davidwalsh.name/being-a-dev-dad"
+    ],
+
+    "https://stratechery.com": [
+        "https://stratechery.com/2020/united-states-v-google/",
+        "https://stratechery.com/2020/twitter-responsibility-and-accountability/",
+        "https://stratechery.com/2020/disneys-integration/",
+        "https://stratechery.com/2020/2020-bundles/",
+        "https://stratechery.com/2020/nvidias-integration-dreams/",
+        "https://stratechery.com/2020/rethinking-the-app-store/",
+        "https://stratechery.com/2020/india-jio-and-the-four-internets/"
     ]
 }
