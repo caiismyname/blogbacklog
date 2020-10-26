@@ -68,7 +68,7 @@ function extractBaseTitle(baseUrl) {
     return(cleaned);
 }
 
-function cleanLinks(links) {
+function cleanLinks(links, baseUrl) {
     var cleanedLinks = [];
 
     for (const idx in links) {
@@ -86,14 +86,23 @@ function cleanLinks(links) {
 
         // Check for non-links
         var broke = false;
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin", "javascript:void(0)"];
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin", "javascript:void(0)", "redirect="];
         for (item of banned) {
             if (link.url.includes(item)) {
-                // if (logStatus) { console.log(link, item); };
                 broke = true;
                 break;
             }
         }
+
+        // Remove self-links
+        const variationsOfBaseUrl = [baseUrl, baseUrl + "/", "/"];
+        for (item of variationsOfBaseUrl) {
+            if (link.url === item) {
+                broke = true;
+                break;
+            }
+        }
+
         if (broke) {
             continue;
         }
@@ -105,11 +114,6 @@ function cleanLinks(links) {
 
         cleanedLinks.push(link);
     }
-
-    // // If there's a self-link, remove it
-    // if (cleanedLinks.includes(baseUrl)) {
-    //     cleanedLinks.splice(cleanedLinks.indexOf(baseUrl), 1);
-    // }
 
     return(cleanedLinks);
 }
@@ -139,16 +143,23 @@ function formatLinks(links, baseUrl) {
 // Merges two dicts
 function mergeDicts(a,b) {
     const result = { ...a};
+    var fauxUUID = 0;
     
     for (key in b) {
         if (key in result) {
-            continue;
+            const newKey = key + String(fauxUUID);
+            result[newKey] = b[key];
+            fauxUUID += 1;
         } else {
             result[key] = b[key];
         }
     }
 
     return(result);
+}
+
+function removeDuplicates(input) {
+    return ([...new Set(input)]);
 }
 
 //
@@ -216,6 +227,7 @@ function traverser(node, depth, parentName, containsBannedWords, containsHeader)
                     'containsHeader': containsHeader,
                     'parentName': parentName,
                     'similarToBaseUrl': false,
+                    'frequency': 0,
                 }
             };
         }
@@ -287,13 +299,13 @@ async function parseWebpage(url, callback) {
         
         // if (logStatus) { console.log(foundLinks); }
         
-        const cleanedLinks = cleanLinks(foundLinks); // TODO converting dict to list needs to be moved out of this step
+        const cleanedLinks = cleanLinks(foundLinks, url); // TODO converting dict to list needs to be moved out of this step
         const scoredLinks = score(cleanedLinks, url);
         if (logStatus) { console.log("scored", scoredLinks); };
         const chosenLinks = pickLinks(scoredLinks);
         const formattedLinks = formatLinks(chosenLinks, url);
 
-        const extractedLinks = formattedLinks.map((link) => {return(link.url)});
+        const extractedLinks = removeDuplicates(formattedLinks.map((link) => {return(link.url)}));
         
         if (logStatus) { console.log("Extracted Links:", extractedLinks); };
 
@@ -342,9 +354,9 @@ function scoreDepthSiblings(links) {
 
     // Add depthFrequencyRanking to each link
     for (const link in newLinks) {
-        var score = depthsByFrequency.indexOf(newLinks[link]['depth']) + 1;
-        if (score > 2) {
-            score = 2
+        var score = depthsByFrequency.indexOf(newLinks[link]['depth']);
+        if (score > 1) {
+            score = 1
         }
         newLinks[link].scoring.depthFrequencyRanking = score;
     }
@@ -371,6 +383,29 @@ function scoreBaseUrlSimilarity(links, baseUrl) {
     return (newLinks);
 }
 
+function scoreFrequency(links) {
+    var newLinks = [ ... links];
+
+    const linkCount = newLinks
+        .map((link) => {return(link.url)})
+        .reduce((counter, link) => {
+            if (link in counter) {
+                counter[link] = counter[link] + 1;
+            } else {
+                counter[link] = 1;
+            }
+
+            return (counter);
+        }, {});
+
+    for (link in newLinks) {
+        const linkData = newLinks[link];
+        linkData.scoring.frequency = linkCount[linkData.url] - 1;
+    }
+
+    return (newLinks);
+}
+
 function score(links, baseUrl) {
     // Lower is better
     var scoredLinks = [ ... links];
@@ -378,6 +413,7 @@ function score(links, baseUrl) {
     // Run scoring functions
     scoredLinks = scoreDepthSiblings(scoredLinks);
     scoredLinks = scoreBaseUrlSimilarity(scoredLinks, baseUrl);
+    scoredLinks = scoreFrequency(scoredLinks);
 
     // Compute total score
     for (const link in scoredLinks) {
@@ -389,6 +425,8 @@ function score(links, baseUrl) {
         score += scoringWeights.similarToBaseUrl * (linkData.scoring.similarToBaseUrl ? 0 : 1);
         score += scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.PARAGRAPH ? 1 : 0);
         score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.HEADER ? 1 : 0);
+        score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.LI ? .5 : 0);
+        score -= scoringWeights.frequency * (linkData.scoring.frequency);
         if (linkData.scoring.parentName !== parentTypes.HEADER) {
             score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
         }
@@ -405,13 +443,14 @@ function pickLinks(links) {
         .map((link) => {return(link.scoring.score);});
 
 
-    var scoreThreshold = scoreDistribution.reduce((acc, score) => {
+    var lowestScore = scoreDistribution.reduce((acc, score) => {
         return (score < acc)  ? score : acc;
     }, 100);
 
+    var scoreThreshold = Math.max(0, lowestScore);
+
     if (logStatus) {
         console.log("Score Distribution", scoreDistribution);
-        console.log("Score Threshold fuzz", scoreThresholdFuzz);
         console.log("Score Threshold", scoreThreshold);
     }
 
