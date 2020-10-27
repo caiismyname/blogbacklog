@@ -86,7 +86,7 @@ function cleanLinks(links, baseUrl) {
 
         // Check for non-links
         var broke = false;
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin", "javascript:void(0)", "redirect="];
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin", "javascript:void(0)", "redirect=", "#more", "#comments"];
         for (item of banned) {
             if (link.url.includes(item)) {
                 broke = true;
