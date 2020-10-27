@@ -9,9 +9,7 @@ davidcai.me
 https://stratechery.com
 https://www.anandtech.com
 https://computer.forensikblog.de/en/
-http://www.brendangregg.com/blog/
 https://firstdoit.com
-http://fbrnc.net // wonky layout
 https://haydenjames.io/ // has "nav" in the class for the body
 http://jakeyesbeck.com/archives/ // relative link paths don't append directly to base url
 
@@ -26,3 +24,6 @@ https://dragan.rocks
 http://www.practicallyefficient.com/archive.html
 http://www.practicallyefficient.com/
 https://www.igvita.com/archives/
+http://www.brendangregg.com/blog/
+http://fbrnc.net
+https://stratechery.com
