@@ -1,9 +1,8 @@
 var express = require('express');
 var router = express.Router();
-const { DateTime } = require('luxon');
 const dotenv = require('dotenv');
 var logStatus = true;
-const { processFunc } = require("../routes/linkExtractor");
+const { processFunc, extractBaseTitle } = require("../routes/linkExtractor");
 
 // Firebase Initialization
 const admin = require('firebase-admin');
@@ -35,6 +34,14 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+function splitManualInputLinks(input) {
+    const spaceStripped = input.replace(" ", "");
+    const separated = spaceStripped.split(",");
+    const emptiesRemoved = separated.filter((x) => x.length > 0);
+
+    return (emptiesRemoved);
+}
+
 // Routes
 
 router.get('/feed', (req, res, next) => {
@@ -45,12 +52,12 @@ router.post('/createFeed', async (req, res, next) => {
     const feedsRef = db.collection('feeds');
     const cleanedTitle = extractBaseTitle(req.body.baseUrl);
 
-    // const cleanedDayOfWeek = cleanDayOfWeek(req.body.dayOfWeek);
+    const manualInputedLinks = splitManualInputLinks(req.body.manualLinks);
+    const allLinks = req.body.links.concat(manualInputedLinks);
 
     await feedsRef.add({
-      entries: req.body.links,
+      entries: allLinks,
       schedule: {
-        // dayOfWeek: cleanedDayOfWeek,
         frequency: Number(req.body.frequency),
         lastSent: null,
       },

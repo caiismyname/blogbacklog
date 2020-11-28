@@ -429,3 +429,4 @@ function pickLinks(links) {
 
 
 exports.processFunc = (url, callback) => {parseWebpage(url, callback)};
+exports.extractBaseTitle = (baseUrl) => {return(extractBaseTitle(baseUrl))};
