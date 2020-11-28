@@ -12,9 +12,11 @@ block content
              label(for=link)=" " + link
              br
         hr
+        h2 Paste in any missed links (comma separated)
+        textarea(name="additionalLinks")
         h2 Delivery Schedule
         div.input
-            p Frequency: Every n days
+            p Frequency: Every <i>n</i> days
             each val in [1,2,3,4,5,6,7]
                 if val == 3
                     input(type="radio", name="frequency", value=val, id=val, checked=true)
