@@ -1,6 +1,6 @@
 const { DateTime } = require('luxon');
-var domParser = require('html-dom-parser');
-const request = require('request'); // Anyone know if these should be var or const?
+const domParser = require('html-dom-parser');
+const request = require('request'); 
 var logStatus = true;
 const scoringWeights = require('./scoring-weights.json');
 

@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 const dotenv = require('dotenv');
 var logStatus = true;
 const { processFunc, extractBaseTitle } = require("../routes/linkExtractor");
