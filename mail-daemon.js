@@ -89,7 +89,7 @@ function sendMail(toSend) {
             from: 'Blog Backlog <send@mail.blogbacklog.com>',
             to: feed.recipientEmail,
             subject: 'Delivery from ' + feed.sourceTitle,
-            text: 'Your article: ' + feed.entries[0],
+            text: 'Your article: ' + feed.entries[0] + "\n\n" + "Unsubscribe link: blogbacklog.com/unsubscribe/" + feed.id,
         };
         mg.messages().send(data, function (error, body) {
             if (body) {
