@@ -2,15 +2,15 @@ const express = require('express');
 // const cors = require('cors');
 const PORT = 4000;
 
-
 var createError = require('http-errors');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const app = express();
- indexRouter = require('./routes/index');
+indexRouter = require('./routes/index');
 const { processRouter } = require('./routes/process');
+const { unsubscribeRouter } = require('./routes/unsubscribe');
 
 // App + Router initialization
 
@@ -26,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/process', processRouter);
+app.use('/unsubscribe', unsubscribeRouter);
 
 app.listen(PORT, function() {
     console.log("Server is running on Port: " + PORT);
