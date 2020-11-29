@@ -42,12 +42,6 @@ function splitManualInputLinks(input) {
     return (emptiesRemoved);
 }
 
-// Very basic, just checking for something@something.something
-function isValidEmail(emailAddress) {
-    var re = "/\S+@\S+\.\S+/";
-    return (re.test(emailaddress));
-}
-
 // Routes
 
 // // Empty endpoint for now, intended to host a "view/edit" feature.

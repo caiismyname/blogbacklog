@@ -24,7 +24,7 @@ block content
                 label(for=val)=" " + val
                 br
             p Delivery email address:
-            input(type="text", name="recipientEmail")
+            input(type="text", name="recipientEmail", id="emailInput")
             //- p Select your delivery schedule:
             //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             //-     input(type="radio", name="dayOfWeek", value=day, id=day)
@@ -35,6 +35,14 @@ block content
         div.action
             input(type="submit", value="Submit", id="submitButton")
 
+    script(type='text/javascript').
+        document.getElementById('submitButton').disabled = true;
 
-    script.
-        console.log('Hello Jade!');
+        function isValidEmail(emailAddress) {
+            const regex = new RegExp(/\S+@\S+\.\S+/);
+            return (regex.test(emailAddress));
+        };
+
+        document.getElementById('emailInput').addEventListener('input', function() {
+            document.getElementById('submitButton').disabled = !isValidEmail(this.value);
+        });
