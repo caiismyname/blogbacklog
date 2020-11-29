@@ -9,9 +9,9 @@ block content
     hr
     p To get started, enter the URL of the page to extract links from — index pages of blogs work best:
     br
-    form(name="inputUrl", action="/process/parseUrls", method="post")
+    form(name="inputUrl", action="/process/parse", method="post")
         div.input
-            input(type="text", name="baseUrl")
+            input(type="text", name="baseUrl", value=prefillUrl)
         br
         div.action
             input(type="submit", value="Extract")

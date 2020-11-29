@@ -44,9 +44,9 @@ function splitManualInputLinks(input) {
 
 // Routes
 
-router.get('/feed', (req, res, next) => {
-
-});
+// // Empty endpoint for now, intended to host a "view/edit" feature.
+// router.get('/feed', (req, res, next) => {
+// });
 
 router.post('/createFeed', async (req, res, next) => {
     const feedsRef = db.collection('feeds');
@@ -80,13 +80,12 @@ router.post('/createFeed', async (req, res, next) => {
     );
 });
 
-router.post('/parseUrls', async (req, res, next) => {
+router.post('/parse', async (req, res, next) => {
     var url = req.body.baseUrl.trim();
     if (!url.includes('http')) {
         url = 'http://' + url;
     }
     processFunc(url, (cleanedLinks) => {
-
         res.render('saveChanges', 
             { 
                 title: 'Blog Backlog',
