@@ -1,17 +1,23 @@
 extends layout.pug
 
 block content
+    - const numLinksExtracted = data.links.length
     form(name="submitInfo", action="/process/createFeed", method="post")
         input(type="hidden", name="baseUrl", value= data.baseUrl)
-        h1 Here's what we found
-        p Extracted from #{data.baseUrl}
-        br
-        each link in data.links
-             input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox
-             label(for=link)=" " + link
-             br
-        hr
-        h2 Paste in any missed links (comma separated)
+        if numLinksExtracted > 0
+            h1 Here's what we found
+            p Extracted from #{data.baseUrl}
+            br
+            each link in data.links
+                input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox
+                label(for=link)=" " + link
+                br
+            br
+            hr
+            h2 Paste in any missed links (comma separated)
+        else
+            h1 Sorry, looks like we didn't find anything at #{data.baseUrl}
+            h2 But feel free to manually add links you want delivered below.
         textarea(name="manualLinks")
         h2 Delivery Schedule
         div.input

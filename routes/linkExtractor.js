@@ -8,8 +8,6 @@ const scoringWeights = require('./scoring-weights.json');
 // Helpers and Cleaners
 //
 
-const { default: parse } = require("node-html-parser");
-
 const parentTypes = {
     HEADER: 'header',
     PARAGRAPH: 'paragraph',
@@ -258,6 +256,12 @@ async function parseWebpage(url, callback) {
         }
     };
     request(options, (err, res, body) => {
+        if (err) {
+            console.log(err);
+            callback([]);
+            return;
+        }
+
         const nodes = findRoot(domParser(body));
         var foundLinks = []; // dict of [link: weight]
 
