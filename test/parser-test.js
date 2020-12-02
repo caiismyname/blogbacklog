@@ -1,5 +1,4 @@
-const { processFunc, setLogStatus } = require("../routes/process");
-const { processFunc } = require("../routes/linkExtractor");
+const { processFunc, setLogStatus } = require("../routes/linkExtractor");
 const testSites = require("./testSites.json");
 
 setLogStatus(false);

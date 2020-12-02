@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
-var logStatus = true;
 const { processFunc, extractBaseTitle } = require("../routes/linkExtractor");
 
 // Firebase Initialization
@@ -98,10 +97,4 @@ router.post('/parse', async (req, res, next) => {
     });
 });
 
-
-function setLogStatus(status) {
-    logStatus = status;
-}
-
 exports.processRouter = router;
-exports.setLogStatus = (status) => {setLogStatus(status)};

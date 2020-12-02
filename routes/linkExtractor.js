@@ -426,11 +426,19 @@ function pickLinks(links) {
         console.log("Score Threshold", scoreThreshold);
     }
 
+    // chosenLinks = links;
     chosenLinks = links.filter((link) => {return(link.scoring.score <= scoreThreshold)});
     
     return (chosenLinks);
 }
 
 
+function setLogStatus(status) {
+    logStatus = status;
+}
+
+
+
 exports.processFunc = (url, callback) => {parseWebpage(url, callback)};
 exports.extractBaseTitle = (baseUrl) => {return(extractBaseTitle(baseUrl))};
+exports.setLogStatus = (status) => {setLogStatus(status)};

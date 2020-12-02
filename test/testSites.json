@@ -44,6 +44,10 @@
         "https://overreacted.io/why-do-we-write-super-props/"
     ],
     "https://apmmap.substack.com": [
+        "https://apmmap.substack.com/p/apm-map-issue-10-the-finale",
+        "https://apmmap.substack.com/p/apm-map-issue-9-can-we-feature-you",
+        "https://apmmap.substack.com/p/apm-map-issue-8-on-tackling-the-technical",
+        "https://apmmap.substack.com/p/apm-map-issue-7-on-estimation-questions",
         "https://apmmap.substack.com/p/apm-map-issue-6-on-gratitude-growth",
         "https://apmmap.substack.com/p/apm-map-special-product-hunt-edition",
         "https://apmmap.substack.com/p/apm-map-issue-5-on-journaling-your",
@@ -85,21 +89,22 @@
     ],
     "https://davidwalsh.name": [
         "https://davidwalsh.name/cookiestore",
-        "https://davidwalsh.name/prevent-paste",
-        "https://davidwalsh.name/sports-data-for-developers-sportdataapi",
         "https://davidwalsh.name/leaving-mozilla",
-        "https://davidwalsh.name/mediastack",
-        "https://davidwalsh.name/async-function-class",
-        "https://davidwalsh.name/detect-sticky",
-        "https://davidwalsh.name/shoelace-css-2",
-        "https://davidwalsh.name/get-default-branch-name",
-        "https://davidwalsh.name/vital-web-performance",
         "https://davidwalsh.name/bitcoin-tips",
         "https://davidwalsh.name/pornhub-interview",
         "https://davidwalsh.name/new-office",
         "https://davidwalsh.name/retropie-graphical-guide",
         "https://davidwalsh.name/conquering-impostor-syndrome",
-        "https://davidwalsh.name/being-a-dev-dad"
+        "https://davidwalsh.name/being-a-dev-dad",
+        "https://davidwalsh.name/10-amazing-media-tricks-made-possibly-by-cloudinary",
+        "https://davidwalsh.name/thankful-2020",
+		"https://davidwalsh.name/submit-button-outside-form",
+		"https://davidwalsh.name/detect-generator-function",
+		"https://davidwalsh.name/git-remove-untracked-files",
+		"https://davidwalsh.name/node-isconnected",
+		"https://davidwalsh.name/promise-pool",
+		"https://davidwalsh.name/request-metrics-performance",
+		"https://davidwalsh.name/detect-changed-files-git"
     ],
 
     "https://stratechery.com": [
@@ -125,6 +130,12 @@
         "https://firstdoit.com/lead-by-example-or-dont-lead-at-all-6213aa1c8dea?source=collection_home---6------5-----------------------"
     ],
     "https://pmtechlessons.com": [
+        "https://pmtechlessons.com/breaking-down-grammarlys-frontend-complexity",
+        "https://www.pmtechlessons.com/why-pms-should-be-technical",
+        "https://www.pmtechlessons.com/mobile-apps",
+        "https://www.pmtechlessons.com/passwords-an-introduction-to-security",
+        "https://www.pmtechlessons.com/jeffrey-fabian-apm-map-interview",
+        "https://www.pmtechlessons.com/breaking-down-netflixs-video-gatekeeper",
         "https://pmtechlessons.com/breaking-down-dropboxs-sync-engine-rebuild",
         "https://pmtechlessons.com/intro-to-machine-learning-via-slacks-invite-spam-solution",
         "https://pmtechlessons.com/backend-programming-languages",
