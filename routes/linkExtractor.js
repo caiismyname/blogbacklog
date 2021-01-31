@@ -19,6 +19,10 @@ function cleanDayOfWeek(dayString) {
     return(DateTime.fromFormat(dayString, "EEEE").weekday);
 }
 
+function computeAverage(inputs) {
+    return(inputs.reduce((sum, cur) => sum + cur) / inputs.length);
+}
+
 function extractBaseTitle(baseUrl) {
     const start = baseUrl.indexOf("://");
     if (start === -1) {
@@ -53,7 +57,7 @@ function cleanLinks(links, baseUrl) {
 
         // Check for non-links
         var broke = false;
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "?share=facebook", "?share=google", "?share=twitter", "?share=reddit", "?share=linkedin", "javascript:void(0)", "redirect=", "#more", "#comments"];
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip"];
         for (item of banned) {
             if (link.url.includes(item)) {
                 broke = true;
@@ -327,7 +331,9 @@ function scoreDepthSiblings(links) {
     // Add depthFrequencyRanking to each link
     for (const link in newLinks) {
         var score = depthsByFrequency.indexOf(newLinks[link]['depth']);
-        if (score > 1) {
+        if (score < 3) {
+            score = 0;
+        } else {
             score = 1
         }
         newLinks[link].scoring.depthFrequencyRanking = score;
@@ -337,18 +343,28 @@ function scoreDepthSiblings(links) {
 }
 
 function scoreBaseUrlSimilarity(links, baseUrl) {
-    var newLinks = [ ... links];
+    //
+    // Testing a straight up removal. List-type posts just won't work with the system.
+    //
+
+
+    // var newLinks = [ ... links];
+    var newLinks = [];
     const baseTitle = extractBaseTitle(baseUrl);
 
-    for (const link in newLinks) {
-        const linkData = newLinks[link];
+    // for (const link in newLinks) {
+    for (const link in links) {
+        // const linkData = newLinks[link];
+        const linkData = links[link];
         
         if (linkData.url.slice(0,1) === "/") {
-            linkData.scoring.similarToBaseUrl = true;
+            // linkData.scoring.similarToBaseUrl = true;
+            newLinks.push(linkData);
         } else if (linkData.url.includes(baseTitle)) {
-            linkData.scoring.similarToBaseUrl = true;
+            // linkData.scoring.similarToBaseUrl = true;
+            newLinks.push(linkData);
         } else {
-            linkData.scoring.similarToBaseUrl = false;
+            // linkData.scoring.similarToBaseUrl = false;
         }
     }
 
@@ -397,7 +413,7 @@ function score(links, baseUrl) {
         score += scoringWeights.similarToBaseUrl * (linkData.scoring.similarToBaseUrl ? 0 : 1);
         score += scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.PARAGRAPH ? 1 : 0);
         score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.HEADER ? 1 : 0);
-        score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.LI ? .5 : 0);
+        score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.LI ? 1 : 0);
         score -= scoringWeights.frequency * (linkData.scoring.frequency);
         if (linkData.scoring.parentName !== parentTypes.HEADER) {
             score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
@@ -410,16 +426,20 @@ function score(links, baseUrl) {
 }
 
 function pickLinks(links) {
+    if (links.length == 0) {
+        return (links);
+    }
+    
     var chosenLinks = [];
     var scoreDistribution = links
         .map((link) => {return(link.scoring.score);});
 
 
-    var lowestScore = scoreDistribution.reduce((acc, score) => {
-        return (score < acc)  ? score : acc;
-    }, 100);
+    // var lowestScore = scoreDistribution.reduce((acc, score) => {
+    //     return (score < acc)  ? score : acc;
+    // }, 100);
 
-    var scoreThreshold = Math.max(0, lowestScore);
+    var scoreThreshold = Math.max(0, computeAverage(scoreDistribution));
 
     if (logStatus) {
         console.log("Score Distribution", scoreDistribution);

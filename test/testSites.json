@@ -50,11 +50,7 @@
         "https://apmmap.substack.com/p/apm-map-issue-7-on-estimation-questions",
         "https://apmmap.substack.com/p/apm-map-issue-6-on-gratitude-growth",
         "https://apmmap.substack.com/p/apm-map-special-product-hunt-edition",
-        "https://apmmap.substack.com/p/apm-map-issue-5-on-journaling-your",
-        "https://apmmap.substack.com/p/apm-map-issue-4-real-friends-and",
-        "https://apmmap.substack.com/p/apm-map-issue-3-on-finding-yourself",
-        "https://apmmap.substack.com/p/issue-2-the-roadmap-to-apm-recruiting",
-        "https://apmmap.substack.com/p/issue-1-welcome-to-apm-map-"
+        "https://apmmap.substack.com/p/apm-map-issue-5-on-journaling-your"
     ],
     "http://fbrnc.net": [
         "http://fbrnc.net/blog/2016/05/green-blue-deployments-with-aws-lambda-and-cloudformation",
@@ -76,16 +72,16 @@
         "https://computer.forensikblog.de/en/2010/08/carvfs-on-a-mac.html"
     ],
     "https://stratechery.com/category/articles/": [
+        "https://stratechery.com/2020/five-lessons-from-dave-chappelle/",
+        "https://stratechery.com/2020/the-idea-adoption-curve/",
+		"https://stratechery.com/2020/playing-on-hard-mode/",
+		"https://stratechery.com/2020/apples-shifting-differentiation/",
+		"https://stratechery.com/2020/is-the-internet-different/",
         "https://stratechery.com/2020/united-states-v-google/",
         "https://stratechery.com/2020/twitter-responsibility-and-accountability/",
         "https://stratechery.com/2020/disneys-integration/",
         "https://stratechery.com/2020/anti-monopoly-vs-antitrust/",
-        "https://stratechery.com/2020/2020-bundles/",
-        "https://stratechery.com/2020/nvidias-integration-dreams/",
-        "https://stratechery.com/2020/rethinking-the-app-store/",
-        "https://stratechery.com/2020/apple-epic-and-the-app-store/",
-        "https://stratechery.com/2020/antitrust-politics/",
-        "https://stratechery.com/2020/india-jio-and-the-four-internets/"
+        "https://stratechery.com/2020/2020-bundles/"
     ],
     "https://davidwalsh.name": [
         "https://davidwalsh.name/cookiestore",
@@ -106,16 +102,6 @@
 		"https://davidwalsh.name/request-metrics-performance",
 		"https://davidwalsh.name/detect-changed-files-git"
     ],
-
-    "https://stratechery.com": [
-        "https://stratechery.com/2020/united-states-v-google/",
-        "https://stratechery.com/2020/twitter-responsibility-and-accountability/",
-        "https://stratechery.com/2020/disneys-integration/",
-        "https://stratechery.com/2020/2020-bundles/",
-        "https://stratechery.com/2020/nvidias-integration-dreams/",
-        "https://stratechery.com/2020/rethinking-the-app-store/",
-        "https://stratechery.com/2020/india-jio-and-the-four-internets/"
-    ],
     "https://firstdoit.com": [
         "https://firstdoit.com/how-to-write-a-react-stateless-functional-component-in-typescript-5d150419bbbc?source=collection_home---4------0-----------------------",
         "https://firstdoit.com/why-autonomy-and-alignment-will-trump-predict-and-control-8f3bc3b6d1fe?source=collection_home---4------1-----------------------",
@@ -131,11 +117,11 @@
     ],
     "https://pmtechlessons.com": [
         "https://pmtechlessons.com/breaking-down-grammarlys-frontend-complexity",
-        "https://www.pmtechlessons.com/why-pms-should-be-technical",
-        "https://www.pmtechlessons.com/mobile-apps",
-        "https://www.pmtechlessons.com/passwords-an-introduction-to-security",
-        "https://www.pmtechlessons.com/jeffrey-fabian-apm-map-interview",
-        "https://www.pmtechlessons.com/breaking-down-netflixs-video-gatekeeper",
+        "https://pmtechlessons.com/why-pms-should-be-technical",
+        "https://pmtechlessons.com/mobile-apps",
+        "https://pmtechlessons.com/passwords-an-introduction-to-security",
+        "https://pmtechlessons.com/jeffrey-fabian-apm-map-interview",
+        "https://pmtechlessons.com/breaking-down-netflixs-video-gatekeeper",
         "https://pmtechlessons.com/breaking-down-dropboxs-sync-engine-rebuild",
         "https://pmtechlessons.com/intro-to-machine-learning-via-slacks-invite-spam-solution",
         "https://pmtechlessons.com/backend-programming-languages",
@@ -151,5 +137,24 @@
         "https://pmtechlessons.com/terminology-pt-1-daily-coding",
         "https://pmtechlessons.com/what-is-an-api",
         "https://pmtechlessons.com/pm-major"
+    ],
+    "http://www.cimgf.com": [
+        "http://www.cimgf.com/2018/05/10/response-the-laws-of-core-data/",
+        "http://www.cimgf.com/2017/12/02/developer-review-2017-macbook-12/",
+        "http://www.cimgf.com/2016/01/28/a-modern-network-operation/",
+        "http://www.cimgf.com/2015/12/14/swift-type-constrained-extensions-express-yourself/",
+        "http://www.cimgf.com/2015/09/21/massive-view-controllers/",
+        "http://www.cimgf.com/2015/08/04/the-next-chapter/",
+        "http://www.cimgf.com/2015/06/25/core-data-and-aggregate-fetches-in-swift/",
+        "http://www.cimgf.com/2015/04/01/xcode-continuous-integration-server-encountered-an-error-with-apple-developer/",
+        "http://www.cimgf.com/2015/02/13/mce-conf-2015/",
+        "http://www.cimgf.com/2015/01/12/well-miss-you-jordan/",
+        "http://www.cimgf.com/2014/12/02/beginning-ios-development-with-swift/",
+        "http://www.cimgf.com/2008/10/01/cocoa-touch-tutorial-iphone-application-example/",
+        "http://www.cimgf.com/2014/11/05/swift-and-valueforkeypath-you-cant-keep-a-good-api-down/",
+        "http://www.cimgf.com/2014/10/29/protocols-in-swift-with-core-data/",
+        "http://www.cimgf.com/2014/06/08/the-core-data-stack-in-swift/",
+        "http://www.cimgf.com/2014/02/25/deleting-objects-in-core-data/"
+      
     ]
 }
