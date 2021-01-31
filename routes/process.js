@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
+const mailgun = require("mailgun-js");
+const DOMAIN = 'mail.blogbacklog.com';
 const { processFunc, extractBaseTitle } = require("../routes/linkExtractor");
 
 // Firebase Initialization
@@ -41,6 +43,34 @@ function splitManualInputLinks(input) {
     return (emptiesRemoved);
 }
 
+function sendWelcomeEmail(links, info, id) {
+    // Mailgun Initialization
+    const mg = mailgun({apiKey: process.env.MAILGUN_KEY, domain: DOMAIN});
+
+    // Prepare data for sending the welcome email
+    const cleanedTitle = extractBaseTitle(info.baseUrl);
+    const cleanedLinks = links.reduce((accum, link) => accum + '- ' + link + '\n', '');
+    const data = {
+        from: 'Blog Backlog <send@mail.blogbacklog.com>',
+        to: info.recipientEmail,
+        subject: 'Welcome to BlogBacklog',
+        text: 'Thank you for using BlogBacklog!\n\n'
+            + 'You\'ll receive the following links from ' + cleanedTitle
+            + '. A link will be sent every ' +  info.frequency + ' day(s).\n\n'
+            + cleanedLinks
+            + "\n\n" + "Unsubscribe link: blogbacklog.com/unsubscribe/" + id,
+    };
+
+    mg.messages().send(data, function (error, body) {
+        if (body) {
+            console.log(body);
+        }
+        if (error) {
+            console.log(error);
+        }
+    });
+}
+
 // Routes
 
 // // Empty endpoint for now, intended to host a "view/edit" feature.
@@ -64,7 +94,8 @@ router.post('/createFeed', async (req, res, next) => {
       baseUrl: req.body.baseUrl,
       sourceTitle: cleanedTitle,
       isActive: true
-    }).then(
+    }).then((fbRes) => {
+        sendWelcomeEmail(allLinks, req.body, fbRes.id);
         res.render('complete', 
             { 
                 title: 'Blog Backlog',
@@ -76,7 +107,7 @@ router.post('/createFeed', async (req, res, next) => {
                 },
             }
         )
-    );
+    });
 });
 
 router.post('/parse', async (req, res, next) => {
