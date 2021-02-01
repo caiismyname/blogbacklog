@@ -3,6 +3,7 @@
     "containsBannedWords": 0.25,
     "containsHeader": 0,
     "parentName": 0.25,
+    "structureSimilarity": 0.25,
     "frequency": 0.0,
     "multipleChildren": 0.00,
     "similarToBaseUrl": 0

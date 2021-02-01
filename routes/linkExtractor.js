@@ -57,7 +57,9 @@ function cleanLinks(links, baseUrl) {
 
         // Check for non-links
         var broke = false;
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip"];
+        // /comments, /about, and /account are for substack
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip", "/comments", "/about", "/account", "/author/", "/user/", "/tag", "/page/", "/people/"];
+
         for (item of banned) {
             if (link.url.includes(item)) {
                 broke = true;
@@ -87,6 +89,21 @@ function cleanLinks(links, baseUrl) {
     }
 
     return(cleanedLinks);
+}
+
+function sortObjectByValue(inputObject) {
+    // Returns from least --> greatest
+    var objs = [];
+    for (const key in inputObject) {
+        objs.push({
+            'key': key,
+            'value': inputObject[key]
+        });
+    }
+    return(objs
+      .sort((a, b) => {return(a.value - b.value)})
+      .map(x => x.key)
+    );
 }
 
 // Post-processing on cleaned links to ensure they are all full URLs
@@ -317,6 +334,7 @@ function scoreDepthSiblings(links) {
     }
 
     // Convert depthMap to relative ranking, ordered most to least frequent
+    // TODO
     var depthsByFrequency = [];
     for (const depth in depthMap) {
         depthsByFrequency.push({
@@ -394,6 +412,42 @@ function scoreFrequency(links) {
     return (newLinks);
 }
 
+function scoreLinkStructureSimilarity(links) {
+    // Hypothesis: blog posts are the majority element, and they will all follow the same URL pattern
+    // Boost links that have the same structure as the dominent structure.
+    // For now, "structure" is just defined as: number of parts (slash (/) delimited)
+
+    const newLinks = [ ... links];
+    
+    // Count each link
+    const structureCounts = {};
+    const linkStructures = {};
+    newLinks
+        .map(link => link.url)
+        .forEach(link => {
+            const count = link.split('/').length - 1;
+            console.log(count);
+            linkStructures[link] = count;
+            if (count in structureCounts) {
+                structureCounts[count] += 1;
+            } else {
+                structureCounts[count] = 1;
+            }
+        });
+
+    const sortedStructures = sortObjectByValue(structureCounts);
+    const mostCommonStructure = parseInt(sortedStructures.slice(-1)[0]); // last element in the ascending-ly sorted list
+    console.log(sortedStructures, mostCommonStructure);
+    
+    for (link in newLinks) {
+        const linkData = newLinks[link]
+        console.log(linkStructures[linkData.url], linkStructures[linkData.url] === mostCommonStructure);
+        linkData.scoring.structureSimilarity = linkStructures[linkData.url] === mostCommonStructure ? true : false;
+    }
+
+    return (newLinks);
+}
+
 function score(links, baseUrl) {
     // Lower is better
     var scoredLinks = [ ... links];
@@ -402,6 +456,7 @@ function score(links, baseUrl) {
     scoredLinks = scoreDepthSiblings(scoredLinks);
     scoredLinks = scoreBaseUrlSimilarity(scoredLinks, baseUrl);
     scoredLinks = scoreFrequency(scoredLinks);
+    scoredLinks = scoreLinkStructureSimilarity(scoredLinks);
 
     // Compute total score
     for (const link in scoredLinks) {
@@ -415,6 +470,7 @@ function score(links, baseUrl) {
         score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.HEADER ? 1 : 0);
         score -= scoringWeights.parentName * (linkData.scoring.parentName === parentTypes.LI ? 1 : 0);
         score -= scoringWeights.frequency * (linkData.scoring.frequency);
+        score -= scoringWeights.structureSimilarity * (linkData.scoring.structureSimilarity ? 1 : 0);
         if (linkData.scoring.parentName !== parentTypes.HEADER) {
             score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
         }
@@ -451,7 +507,6 @@ function pickLinks(links) {
     
     return (chosenLinks);
 }
-
 
 function setLogStatus(status) {
     logStatus = status;
