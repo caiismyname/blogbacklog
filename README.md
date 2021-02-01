@@ -1,68 +1,30 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Blog Backlog
 
-## Available Scripts
+Blog Backlog (BBL) is a tool that extracts semantically valuable (e.g. non-navigational) links from a webpage and send thems to a specified email address on a schedule.
 
-In the project directory, you can run:
+The intended use case is to enabled metered consumption of a backlog of written content.
 
-### `npm start`
+I made this because I often encounter blogs with a great history, but would be overwhelming to add to my read-it-later as a massive batch. This allows me to consume the posts on my own schedule without overloading my reading list.
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Tech Stack
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+The app is made using:
+* JS as its only language, both FE and BE
+* Pug as the FE templating engine
+* Mailgun for email sending
+* Firebase as the datastore
+* Custom code for parsing webpages and determining what is actually a semantic link
 
-### `npm test`
+## Semantic Link?
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+BBL is intended to scrape an index page of a blog (e.g. "All posts", "Archive", etc.) — other pages work, but these pages work best. Its heuristics are based on link structure, the DOM stack of the element that contains the link, contents of the link, and frequency patterns within the page. It's not perfect, but when it fails it tends to overcapture rather than under capture. And anyways, that's what the checkboxes and the text-entry box are for.
 
-### `npm run build`
+## Feature Todo List
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+* Automated handling of paged blogs
+* Mimicking "scroll to the bottom" on pages that dynamically load content in batches, such as Substack's "all posts" page
+* Better removal of sidebar / header elements
+* Continual improvement of the parsing heuristic
+* Tons of coding style issues to improve
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+_BBL is in active development. This README was last updated on 1.31.21_
