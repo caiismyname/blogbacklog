@@ -1,4 +1,5 @@
 const express = require('express');
+const functions = require('firebase-functions');
 // const cors = require('cors');
 const PORT = 4000;
 
@@ -47,4 +48,5 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+// module.exports = app;
+exports.app = functions.https.onRequest(app);

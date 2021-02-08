@@ -18,12 +18,13 @@
 .env.test.local
 .env.production.local
 *.icloud
+*.log
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # api keys
-blogbacklog-cb6c3df2e9a2.json
-mailgun-api-key.json
+functions/firebase-service-account.json
+functions/mailgun-api-key.json
 .env

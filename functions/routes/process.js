@@ -1,39 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const dotenv = require('dotenv');
+const firebaseAdmin = require('firebase-admin');
 const mailgun = require("mailgun-js");
 const DOMAIN = 'mail.blogbacklog.com';
 const { processFunc, extractBaseTitle } = require("../routes/linkExtractor");
 
-// Firebase Initialization
-const admin = require('firebase-admin');
 dotenv.config()
-const serviceAccount = {
-    "type": process.env.FIREBASE_TYPE,
-    "project_id": process.env.FIREBASE_PROJECT_ID,
-    "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
-    "private_key": process.env.FIREBASE_PRIVATE_KEY,
-    "client_email": process.env.FIREBASE_CLIENT_EMAIL,
-    "client_id": process.env.FIREBASE_CLIENT_ID,
-    "auth_uri": process.env.FIREBASE_AUTH_URI,
-    "token_uri": process.env.FIREBASE_TOKEN_URI,
-    "auth_provider_x509_cert_url": process.env.FIREBASE_AUTH_PROVIDER_x509_CERT_URL,
-    "client_x509_cert_url": process.env.FIREBASE_AUTH_CLIENT_x509_CERT_URL,
-};
-
-// Fix Firebase private key
-const privateKeySplit = process.env.FIREBASE_PRIVATE_KEY.split("\\n");
-var fixedPrivateKey = "";
-for (portion of privateKeySplit) {
-    fixedPrivateKey = fixedPrivateKey + portion + "\n";
-}
-serviceAccount.private_key = fixedPrivateKey
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+firebaseAdmin.initializeApp({
+    credential: firebaseAdmin.credential.applicationDefault()
 });
 
-const db = admin.firestore();
+const db = firebaseAdmin.firestore();
 
 function splitManualInputLinks(input) {
     const spaceStripped = input.replace(" ", "");
