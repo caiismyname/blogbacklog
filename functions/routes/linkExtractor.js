@@ -1,150 +1,146 @@
-const { DateTime } = require('luxon');
-const domParser = require('html-dom-parser');
-const request = require('request'); 
-var logStatus = true;
-const scoringWeights = require('./scoring-weights.json');
+/* eslint no-param-reassign: "error" */
+const domParser = require("html-dom-parser");
+const request = require("request");
+
+let logStatus = true;
+const scoringWeights = require("./scoring-weights.json");
 
 //
 // Helpers and Cleaners
 //
 
 const parentTypes = {
-    HEADER: 'header',
-    PARAGRAPH: 'paragraph',
-    UNKNOWN: 'unknown',
-    LI: 'li',
+    HEADER: "header",
+    PARAGRAPH: "paragraph",
+    UNKNOWN: "unknown",
+    LI: "li",
 };
 
-function cleanDayOfWeek(dayString) {
-    return(DateTime.fromFormat(dayString, "EEEE").weekday);
-}
-
 function computeAverage(inputs) {
-    return(inputs.reduce((sum, cur) => sum + cur) / inputs.length);
+    return (inputs.reduce((sum, cur) => sum + cur) / inputs.length);
 }
 
 function extractBaseTitle(baseUrl) {
     const start = baseUrl.indexOf("://");
     if (start === -1) {
-        return(baseUrl);
+        return (baseUrl);
     }
 
-    var cleaned = "";
-    var cur = start + 3;
+    let cleaned = "";
+    let cur = start + 3;
     while (baseUrl[cur] !== "/" && baseUrl[cur] !== "?" && cur < baseUrl.length) {
         cleaned += baseUrl[cur];
         cur += 1;
     }
 
-    return(cleaned);
+    return (cleaned);
 }
 
 function cleanLinks(links, baseUrl) {
-    var cleanedLinks = [];
+    const cleanedLinks = [];
 
-    for (const idx in links) {
-        var link = links[idx];
-
+    links.forEach((link) => {
         // Replace any strange characters
         const toReplace = {
             " ": "",
             "&#x2F;": "/",
         };
 
-        for (const key in toReplace) {
+        Object.keys(toReplace).forEach((key) => {
             link.url = link.url.replace(key, toReplace[key]);
-        }
+        });
 
         // Check for non-links
-        var broke = false;
+        let broke = false;
         // /comments, /about, and /account are for substack
-        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip", "/comments", "/about", "/account", "/author/", "/user/", "/tag", "/page/", "/people/"];
+        const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip", "/comments", "/about", "/account", "/author/", "/user/", "/tag", "/page/", "/people/"]; // eslint-disable-line no-script-url
 
-        for (item of banned) {
+        banned.forEach((item) => {
             if (link.url.includes(item)) {
                 broke = true;
-                break;
             }
-        }
+        });
 
         // Remove self-links
-        const variationsOfBaseUrl = [baseUrl, baseUrl + "/", "/"];
-        for (item of variationsOfBaseUrl) {
+        const variationsOfBaseUrl = [baseUrl, `${baseUrl}/`, "/"];
+        variationsOfBaseUrl.forEach((item) => {
             if (link.url === item) {
                 broke = true;
-                break;
             }
-        }
+        });
 
         if (broke) {
-            continue;
+            return;
         }
-        
+
         // Remove duplicates
         // if (!(cleanedLinks.includes(link))) {
         //     cleanedLinks.push(link);
         // }
 
         cleanedLinks.push(link);
-    }
+    });
 
-    return(cleanedLinks);
+    return (cleanedLinks);
 }
 
 function sortObjectByValue(inputObject) {
     // Returns from least --> greatest
-    var objs = [];
-    for (const key in inputObject) {
+    const objs = [];
+    Object.keys(inputObject).forEach((key) => {
         objs.push({
-            'key': key,
-            'value': inputObject[key]
+            key,
+            value: inputObject[key],
         });
-    }
-    return(objs
-      .sort((a, b) => {return(a.value - b.value)})
-      .map(x => x.key)
+    });
+
+    return (objs
+        .sort((a, b) => (a.value - b.value))
+        .map((x) => x.key)
     );
 }
 
 // Post-processing on cleaned links to ensure they are all full URLs
 function formatLinks(links, baseUrl) {
-    var newBaseUrl = baseUrl;
+    let newBaseUrl = baseUrl;
     if (newBaseUrl.slice(-1) !== "/") {
         newBaseUrl = newBaseUrl.concat("/");
     }
 
-    var newLinks = links.map((link) => {
-        if (link.url.slice(0,4) !== "http") {
-            if (link.url.slice(0,1) !== "/") {
-                link.url = newBaseUrl + link.url;
+    let newLinks = links.slice();
+    newLinks = newLinks.map((link) => {
+        const updatedLink = { ...link };
+        if (updatedLink.url.slice(0, 4) !== "http") {
+            if (updatedLink.url.slice(0, 1) !== "/") {
+                updatedLink.url = newBaseUrl + updatedLink.url;
             } else {
-                link.url = newBaseUrl + link.url.slice(1);
+                updatedLink.url = newBaseUrl + updatedLink.url.slice(1);
             }
         }
 
-        return (link);
+        return (updatedLink);
     });
 
     return (newLinks);
 }
 
 // Merges two dicts
-function mergeDicts(a,b) {
-    const result = { ...a};
-    var fauxUUID = 0;
-    
-    for (key in b) {
-        if (key in result) {
-            const newKey = key + String(fauxUUID);
-            result[newKey] = b[key];
-            fauxUUID += 1;
-        } else {
-            result[key] = b[key];
-        }
-    }
+// function mergeDicts(a, b) {
+//     const result = { ...a };
+//     let fauxUUID = 0;
 
-    return(result);
-}
+//     Object.keys(b).forEach((key) => {
+//         if (key in result) {
+//             const newKey = key + String(fauxUUID);
+//             result[newKey] = b[key];
+//             fauxUUID += 1;
+//         } else {
+//             result[key] = b[key];
+//         }
+//     });
+
+//     return (result);
+// }
 
 function removeDuplicates(input) {
     return ([...new Set(input)]);
@@ -155,68 +151,68 @@ function removeDuplicates(input) {
 //
 
 function findRoot(parsed) {
-    var candidates = [];
+    const candidates = [];
 
-    for (item of parsed) {
-        if ('children' in item) {
+    parsed.forEach((item) => {
+        if ("children" in item) {
             candidates.push(item);
         }
-    }
+    });
 
-    return(candidates);
+    return (candidates);
 }
 
 function detectBannedContent(attribs) {
     // Detect headers / sidebars
-    const sections = ['class', 'id', 'role'];
-    const extraneous = ['sidebar', 'nav', 'footer', 'tag'];
+    const sections = ["class", "id", "role"];
+    const extraneous = ["sidebar", "nav", "footer", "tag"];
 
-    var containsBannedWords = false;
-    var containsHeader = false;
+    let containsBannedWords = false;
+    let containsHeader = false;
 
-    for (const section of sections) {
+    sections.forEach((section) => {
         if (section in attribs) {
-            for (item of extraneous) {
+            extraneous.forEach((item) => {
                 if (attribs[section].toLowerCase().includes(item)) {
                     containsBannedWords = true;
                 }
-            }
+            });
 
-            if (attribs[section].toLowerCase().includes('header')) {
+            if (attribs[section].toLowerCase().includes("header")) {
                 containsHeader = true;
             }
         }
-    }
+    });
 
     return ({
-        'containsBannedWords': containsBannedWords,
-        'containsHeader': containsHeader,
+        containsBannedWords,
+        containsHeader,
     });
 }
 
 function traverser(node, depth, parentName, containsBannedWords, containsHeader) {
-    var res = [];
+    let res = [];
 
     // First, check if current node is a link
     if (!node.attribs) {
-        return(res);
+        return (res);
     }
 
-    if (node.name === 'a' && node.attribs.href) {
-            res.push({
-                'depth': depth,
-                'attribs': node.attribs,
-                'url': node.attribs.href,
-                'scoring': {
-                    'score': 0,
-                    'depthFrequencyRanking': 0,
-                    'containsBannedWords': containsBannedWords,
-                    'containsHeader': containsHeader,
-                    'parentName': parentName,
-                    'similarToBaseUrl': false,
-                    'frequency': 0,
-                }
-            });
+    if (node.name === "a" && node.attribs.href) {
+        res.push({
+            depth,
+            attribs: node.attribs,
+            url: node.attribs.href,
+            scoring: {
+                score: 0,
+                depthFrequencyRanking: 0,
+                containsBannedWords,
+                containsHeader,
+                parentName,
+                similarToBaseUrl: false,
+                frequency: 0,
+            },
+        });
     }
 
     if (logStatus) {
@@ -229,31 +225,29 @@ function traverser(node, depth, parentName, containsBannedWords, containsHeader)
 
     // Then, recursive call on children to check if they contain links
 
-    var newParentName = parentName;
-    const headerTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+    let newParentName = parentName;
+    const headerTags = ["h1", "h2", "h3", "h4", "h5", "h6"];
     if (newParentName === parentTypes.UNKNOWN || newParentName === parentTypes.LI) {
         if (headerTags.includes(node.name)) {
             newParentName = parentTypes.HEADER;
-        } else if (node.name === 'p') {
+        } else if (node.name === "p") {
             newParentName = parentTypes.PARAGRAPH;
-        } else if (node.name === 'li') {
+        } else if (node.name === "li") {
             newParentName = parentTypes.LI;
         }
     }
-    
-    var newContainsBannedWords = containsBannedWords;
-    var newContainsHeader = containsHeader;
+
+    let newContainsBannedWords = containsBannedWords;
+    let newContainsHeader = containsHeader;
 
     const detection = detectBannedContent(node.attribs);
     newContainsBannedWords = detection.containsBannedWords || containsBannedWords;
     newContainsHeader = detection.containsHeader || containsHeader;
 
-    for (childIdx in node.children) {
-        const child = node.children[childIdx];
+    node.children.forEach((child) => {
+        const childrenResults = traverser(child, depth + 1, newParentName, newContainsBannedWords, newContainsHeader);
 
-        var childrenResults = traverser(child, depth + 1, newParentName, newContainsBannedWords, newContainsHeader);
-
-                 // As a heuristic, most "title" elements where the link to a post is held will only have one link.
+        // As a heuristic, most "title" elements where the link to a post is held will only have one link.
         // If multiple are discovered, it's like in the body of an excerpt of post itself.
         // var numLinksInDirectChildren = 0;
         // const directChildrenLinks = {};
@@ -263,47 +257,9 @@ function traverser(node, depth, parentName, containsBannedWords, containsHeader)
         // }
 
         res = res.concat(childrenResults);
-    }
-
-    return(res);
-}
-
-// `parseWebpage` is the entrypoint to this whole process
-async function parseWebpage(url, callback) {
-    const options = {
-        'url' : url,
-        headers: {
-            'User-Agent': 'request'
-        }
-    };
-    request(options, (err, res, body) => {
-        if (err) {
-            console.log(err);
-            callback([]);
-            return;
-        }
-
-        const nodes = findRoot(domParser(body));
-        var foundLinks = []; // dict of [link: weight]
-
-        for (node of nodes) {
-            foundLinks = foundLinks.concat(traverser(node, 0, parentTypes.UNKNOWN, false, false));
-        }
-        
-        // if (logStatus) { console.log(foundLinks); }
-        
-        const cleanedLinks = cleanLinks(foundLinks, url); // TODO converting dict to list needs to be moved out of this step
-        const scoredLinks = score(cleanedLinks, url);
-        if (logStatus) { console.log("scored", scoredLinks); };
-        const chosenLinks = pickLinks(scoredLinks);
-        const formattedLinks = formatLinks(chosenLinks, url);
-
-        const extractedLinks = removeDuplicates(formattedLinks.map((link) => {return(link.url)}));
-        
-        if (logStatus) { console.log("Extracted Links:", extractedLinks); };
-
-        callback(extractedLinks);
     });
+
+    return (res);
 }
 
 //
@@ -311,51 +267,51 @@ async function parseWebpage(url, callback) {
 //
 
 function scoreDepthSiblings(links) {
-    var depthMap = {};
-    var newLinks = [ ... links];
+    const depthMap = {};
+    const newLinks = [...links];
 
     // First pass to build depthMap
-    for (const link in newLinks) {
+    Object.keys(newLinks).forEach((link) => {
         const linkData = newLinks[link];
 
-        var value = 0;
+        let value = 0;
 
         if (linkData.scoring.containsBannedWords) {
-            value = .3;
+            value = 0.3;
         } else {
             value = 1;
         }
 
         if (linkData.depth in depthMap) {
-            depthMap[linkData.depth] = depthMap[linkData.depth] + value;
+            depthMap[linkData.depth] += value;
         } else {
             depthMap[linkData.depth] = value;
         }
-    }
+    });
 
     // Convert depthMap to relative ranking, ordered most to least frequent
     // TODO
-    var depthsByFrequency = [];
-    for (const depth in depthMap) {
+    let depthsByFrequency = [];
+    Object.keys(depthMap).forEach((depth) => {
         depthsByFrequency.push({
-            'key': depth,
-            'value': depthMap[depth]
+            key: depth,
+            value: depthMap[depth],
         });
-    }
-    depthsByFrequency = depthsByFrequency.sort((a,b) => {return(a['value'] - b['value'])});
-    depthsByFrequency = depthsByFrequency.map((x) => {return(parseInt(x['key']))});
+    });
+    depthsByFrequency = depthsByFrequency.sort((a, b) => (a.value - b.value));
+    depthsByFrequency = depthsByFrequency.map((x) => (parseInt(x.key, 10)));
     depthsByFrequency.reverse();
 
     // Add depthFrequencyRanking to each link
-    for (const link in newLinks) {
-        var score = depthsByFrequency.indexOf(newLinks[link]['depth']);
+    Object.values(newLinks).forEach((link) => {
+        let score = depthsByFrequency.indexOf(link.depth);
         if (score < 3) {
             score = 0;
         } else {
-            score = 1
+            score = 1;
         }
-        newLinks[link].scoring.depthFrequencyRanking = score;
-    }
+        link.scoring.depthFrequencyRanking = score;
+    });
 
     return (newLinks);
 }
@@ -365,17 +321,13 @@ function scoreBaseUrlSimilarity(links, baseUrl) {
     // Testing a straight up removal. List-type posts just won't work with the system.
     //
 
-
     // var newLinks = [ ... links];
-    var newLinks = [];
+    const newLinks = [];
     const baseTitle = extractBaseTitle(baseUrl);
 
     // for (const link in newLinks) {
-    for (const link in links) {
-        // const linkData = newLinks[link];
-        const linkData = links[link];
-        
-        if (linkData.url.slice(0,1) === "/") {
+    Object.values(links).forEach((linkData) => {
+        if (linkData.url.slice(0, 1) === "/") {
             // linkData.scoring.similarToBaseUrl = true;
             newLinks.push(linkData);
         } else if (linkData.url.includes(baseTitle)) {
@@ -384,30 +336,30 @@ function scoreBaseUrlSimilarity(links, baseUrl) {
         } else {
             // linkData.scoring.similarToBaseUrl = false;
         }
-    }
+    });
 
     return (newLinks);
 }
 
 function scoreFrequency(links) {
-    var newLinks = [ ... links];
+    const newLinks = [...links];
 
     const linkCount = newLinks
-        .map((link) => {return(link.url)})
+        .map((link) => (link.url))
         .reduce((counter, link) => {
+            const updatedCounter = { ...counter };
             if (link in counter) {
-                counter[link] = counter[link] + 1;
+                updatedCounter[link] += 1;
             } else {
-                counter[link] = 1;
+                updatedCounter[link] = 1;
             }
 
-            return (counter);
+            return (updatedCounter);
         }, {});
 
-    for (link in newLinks) {
-        const linkData = newLinks[link];
+    Object.values(newLinks).forEach((linkData) => {
         linkData.scoring.frequency = linkCount[linkData.url] - 1;
-    }
+    });
 
     return (newLinks);
 }
@@ -417,15 +369,15 @@ function scoreLinkStructureSimilarity(links) {
     // Boost links that have the same structure as the dominent structure.
     // For now, "structure" is just defined as: number of parts (slash (/) delimited)
 
-    const newLinks = [ ... links];
-    
+    const newLinks = [...links];
+
     // Count each link
     const structureCounts = {};
     const linkStructures = {};
     newLinks
-        .map(link => link.url)
-        .forEach(link => {
-            const count = link.split('/').length - 1;
+        .map((link) => link.url)
+        .forEach((link) => {
+            const count = link.split("/").length - 1;
             console.log(count);
             linkStructures[link] = count;
             if (count in structureCounts) {
@@ -436,21 +388,20 @@ function scoreLinkStructureSimilarity(links) {
         });
 
     const sortedStructures = sortObjectByValue(structureCounts);
-    const mostCommonStructure = parseInt(sortedStructures.slice(-1)[0]); // last element in the ascending-ly sorted list
+    const mostCommonStructure = parseInt(sortedStructures.slice(-1)[0], 10); // last element in the ascending-ly sorted list
     console.log(sortedStructures, mostCommonStructure);
-    
-    for (link in newLinks) {
-        const linkData = newLinks[link]
+
+    Object.values(newLinks).forEach((linkData) => {
         console.log(linkStructures[linkData.url], linkStructures[linkData.url] === mostCommonStructure);
-        linkData.scoring.structureSimilarity = linkStructures[linkData.url] === mostCommonStructure ? true : false;
-    }
+        linkData.scoring.structureSimilarity = linkStructures[linkData.url] === mostCommonStructure;
+    });
 
     return (newLinks);
 }
 
-function score(links, baseUrl) {
+function scoreLinks(links, baseUrl) {
     // Lower is better
-    var scoredLinks = [ ... links];
+    let scoredLinks = [...links];
 
     // Run scoring functions
     scoredLinks = scoreDepthSiblings(scoredLinks);
@@ -459,10 +410,8 @@ function score(links, baseUrl) {
     scoredLinks = scoreLinkStructureSimilarity(scoredLinks);
 
     // Compute total score
-    for (const link in scoredLinks) {
-        const linkData = scoredLinks[link];
-
-        var score = 0;
+    Object.values(scoredLinks).forEach((linkData) => {
+        let score = 0;
         score += scoringWeights.depthFrequencyRanking * linkData.scoring.depthFrequencyRanking;
         score += scoringWeights.containsBannedWords * (linkData.scoring.containsBannedWords ? 5 : 0);
         score += scoringWeights.similarToBaseUrl * (linkData.scoring.similarToBaseUrl ? 0 : 1);
@@ -476,26 +425,25 @@ function score(links, baseUrl) {
         }
 
         linkData.scoring.score = score;
-    }
+    });
 
     return (scoredLinks);
 }
 
 function pickLinks(links) {
-    if (links.length == 0) {
+    if (links.length === 0) {
         return (links);
     }
-    
-    var chosenLinks = [];
-    var scoreDistribution = links
-        .map((link) => {return(link.scoring.score);});
 
+    let chosenLinks = [];
+    const scoreDistribution = links
+        .map((link) => (link.scoring.score));
 
     // var lowestScore = scoreDistribution.reduce((acc, score) => {
     //     return (score < acc)  ? score : acc;
     // }, 100);
 
-    var scoreThreshold = Math.max(0, computeAverage(scoreDistribution));
+    const scoreThreshold = Math.max(0, computeAverage(scoreDistribution));
 
     if (logStatus) {
         console.log("Score Distribution", scoreDistribution);
@@ -503,8 +451,8 @@ function pickLinks(links) {
     }
 
     // chosenLinks = links;
-    chosenLinks = links.filter((link) => {return(link.scoring.score <= scoreThreshold)});
-    
+    chosenLinks = links.filter((link) => (link.scoring.score <= scoreThreshold));
+
     return (chosenLinks);
 }
 
@@ -512,8 +460,44 @@ function setLogStatus(status) {
     logStatus = status;
 }
 
+// `parseWebpage` is the entrypoint to this whole process
+async function parseWebpage(url, callback) {
+    const options = {
+        url,
+        headers: {
+            "User-Agent": "request",
+        },
+    };
+    request(options, (err, res, body) => {
+        if (err) {
+            console.log(err);
+            callback([]);
+            return;
+        }
 
+        const nodes = findRoot(domParser(body));
+        let foundLinks = []; // dict of [link: weight]
 
-exports.processFunc = (url, callback) => {parseWebpage(url, callback)};
-exports.extractBaseTitle = (baseUrl) => {return(extractBaseTitle(baseUrl))};
-exports.setLogStatus = (status) => {setLogStatus(status)};
+        nodes.forEach((node) => {
+            foundLinks = foundLinks.concat(traverser(node, 0, parentTypes.UNKNOWN, false, false));
+        });
+
+        // if (logStatus) { console.log(foundLinks); }
+
+        const cleanedLinks = cleanLinks(foundLinks, url); // TODO converting dict to list needs to be moved out of this step
+        const scoredLinks = scoreLinks(cleanedLinks, url);
+        if (logStatus) { console.log("scored", scoredLinks); }
+        const chosenLinks = pickLinks(scoredLinks);
+        const formattedLinks = formatLinks(chosenLinks, url);
+
+        const extractedLinks = removeDuplicates(formattedLinks.map((link) => (link.url)));
+
+        if (logStatus) { console.log("Extracted Links:", extractedLinks); }
+
+        callback(extractedLinks);
+    });
+}
+
+exports.processFunc = (url, callback) => { parseWebpage(url, callback); };
+exports.extractBaseTitle = (baseUrl) => (extractBaseTitle(baseUrl));
+exports.setLogStatus = (status) => { setLogStatus(status); };

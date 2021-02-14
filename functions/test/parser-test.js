@@ -5,47 +5,47 @@ setLogStatus(false);
 
 console.log("Testing BlogBacklog extraction");
 
-for (const site in testSites) {
+Object.keys(testSites).forEach((site) => {
     processFunc(site, (results) => {
         console.log(site);
         const solution = testSites[site];
 
-        var missed = [];
-        var overcapture = [];
-        var correct = [];
+        const missed = [];
+        const overcapture = [];
+        const correct = [];
 
-        for (const link of solution) {
+        solution.forEach((link) => {
             if (results.includes(link)) {
                 correct.push(link);
             } else {
                 missed.push(link);
             }
-        }
+        });
 
-        for (const link of results) {
+        results.forEach((link) => {
             if (!solution.includes(link)) {
                 overcapture.push(link);
             }
-        }
+        });
 
         if (missed.length > 0) {
-            console.log("\tMissed " + missed.length);
-            for (const link of missed) {
-                console.log("\t\t" + link);
-            }
+            console.log(`\tMissed ${missed.length}`);
+            missed.forEach((link) => {
+                console.log(`\t\t${link}`);
+            });
         }
 
         if (overcapture.length > 0) {
-            console.log("\tOvercaptured " + overcapture.length);
-            for (const link of overcapture) {
-                console.log("\t\t" + link);
-            }
+            console.log(`\tOvercaptured ${overcapture.length}`);
+            overcapture.forEach((link) => {
+                console.log(`\t\t${link}`);
+            });
         }
 
         if (overcapture.length === 0 && missed.length === 0) {
             console.log("\tALL GOOD");
         }
 
-        console.log("\n")
-    })
-}
+        console.log("\n");
+    });
+});

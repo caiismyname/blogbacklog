@@ -28,3 +28,5 @@ yarn-error.log*
 functions/firebase-service-account.json
 functions/mailgun-api-key.json
 .env
+.runtimeconfig.json
+functions/blogbacklog-cb6c3df2e9a2.json
