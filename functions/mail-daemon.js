@@ -118,4 +118,8 @@ async function start() {
     }
 }
 
-start();
+exports.scheduledFunction = functions.pubsub.schedule("every 1 minute").onRun(() => {
+    console.log("Running maildeamon");
+    start();
+    return null;
+});
