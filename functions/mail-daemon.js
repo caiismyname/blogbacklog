@@ -3,9 +3,6 @@ const functions = require("firebase-functions");
 const { DateTime } = require("luxon");
 const mailgun = require("mailgun-js");
 
-firebaseAdmin.initializeApp({
-    credential: firebaseAdmin.credential.applicationDefault(),
-});
 const db = firebaseAdmin.firestore();
 const feedsRef = db.collection("feeds");
 
@@ -118,8 +115,4 @@ async function start() {
     }
 }
 
-exports.scheduledFunction = functions.pubsub.schedule("every 1 minute").onRun(() => {
-    console.log("Running maildeamon");
-    start();
-    return null;
-});
+exports.mailDaemon = () => { start(); };

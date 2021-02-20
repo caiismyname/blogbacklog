@@ -12,6 +12,7 @@ const app = express();
 const indexRouter = require("./routes/index");
 const { processRouter } = require("./routes/process");
 const { unsubscribeRouter } = require("./routes/unsubscribe");
+const { mailDaemon } = require("./mail-daemon");
 
 // App + Router initialization
 
@@ -48,5 +49,13 @@ app.use((err, req, res) => {
     res.render("error");
 });
 
-// module.exports = app;
 exports.app = functions.https.onRequest(app);
+
+exports.mailDaemon = functions.pubsub
+    .schedule("every day 04:00")
+    .timeZone("America/New_York")
+    .onRun(() => {
+        console.log("Running maildeamon");
+        mailDaemon();
+        return null;
+    });
