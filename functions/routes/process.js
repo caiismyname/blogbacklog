@@ -36,7 +36,7 @@ function sendWelcomeEmail(links, info, id) {
             + "You'll receive the following links from "}${cleanedTitle
         }. A link will be sent every ${info.frequency} day(s).\n\n${
             cleanedLinks
-        }\n\nUnsubscribe link: blogbacklog.com/unsubscribe/${id}`,
+        }\n\n\n\n\nUnsubscribe link: blogbacklog.com/unsubscribe/${id}`,
     };
 
     mg.messages().send(data, (error, body) => {

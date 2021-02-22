@@ -1,4 +1,3 @@
-/* eslint no-param-reassign: "error" */
 const domParser = require("html-dom-parser");
 const request = require("request");
 
@@ -37,48 +36,38 @@ function extractBaseTitle(baseUrl) {
 }
 
 function cleanLinks(links, baseUrl) {
-    const cleanedLinks = [];
-
-    links.forEach((link) => {
-        // Replace any strange characters
+    // Replace strange characters
+    let cleanedLinks = links.map(originalLink => {
+        const updatedLink = { ...originalLink };
         const toReplace = {
             " ": "",
             "&#x2F;": "/",
         };
 
         Object.keys(toReplace).forEach((key) => {
-            link.url = link.url.replace(key, toReplace[key]);
+            updatedLink.url = updatedLink.url.replace(key, toReplace[key]);
         });
 
-        // Check for non-links
-        let broke = false;
+        return(updatedLink);
+    });
+
+    // Remove obviously incorrect links
+    cleanedLinks = cleanedLinks.filter(linkData => {
+        // Remove non-links.
         // /comments, /about, and /account are for substack
         const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip", "/comments", "/about", "/account", "/author/", "/user/", "/tag", "/page/", "/people/"]; // eslint-disable-line no-script-url
 
-        banned.forEach((item) => {
-            if (link.url.includes(item)) {
-                broke = true;
-            }
-        });
-
         // Remove self-links
         const variationsOfBaseUrl = [baseUrl, `${baseUrl}/`, "/"];
-        variationsOfBaseUrl.forEach((item) => {
-            if (link.url === item) {
-                broke = true;
-            }
-        });
 
-        if (broke) {
-            return;
-        }
-
+        return (!(
+            banned.some((phrase) => linkData.url.includes(phrase))
+            || variationsOfBaseUrl.some((variation) => linkData.url === variation)
+        ));
         // Remove duplicates
         // if (!(cleanedLinks.includes(link))) {
         //     cleanedLinks.push(link);
         // }
-
-        cleanedLinks.push(link);
     });
 
     return (cleanedLinks);
@@ -268,24 +257,15 @@ function traverser(node, depth, parentName, containsBannedWords, containsHeader)
 
 function scoreDepthSiblings(links) {
     const depthMap = {};
-    const newLinks = [...links];
 
-    // First pass to build depthMap
-    Object.keys(newLinks).forEach((link) => {
-        const linkData = newLinks[link];
-
-        let value = 0;
-
-        if (linkData.scoring.containsBannedWords) {
-            value = 0.3;
-        } else {
-            value = 1;
-        }
+    // First pass over links to build depth-frequency-map
+    Object.values(links).forEach((linkData) => {
+        const depthCountValue = linkData.scoring.containsBannedWords ? 0.3 : 1; // Discount lesser links in the frequency map
 
         if (linkData.depth in depthMap) {
-            depthMap[linkData.depth] += value;
+            depthMap[linkData.depth] += depthCountValue;
         } else {
-            depthMap[linkData.depth] = value;
+            depthMap[linkData.depth] = depthCountValue;
         }
     });
 
@@ -302,15 +282,22 @@ function scoreDepthSiblings(links) {
     depthsByFrequency = depthsByFrequency.map((x) => (parseInt(x.key, 10)));
     depthsByFrequency.reverse();
 
-    // Add depthFrequencyRanking to each link
-    Object.values(newLinks).forEach((link) => {
-        let score = depthsByFrequency.indexOf(link.depth);
-        if (score < 3) {
-            score = 0;
-        } else {
-            score = 1;
-        }
-        link.scoring.depthFrequencyRanking = score;
+    // Object.values(newLinks).forEach((link) => {
+    //     link.scoring.depthFrequencyRanking =
+    //         depthsByFrequency.indexOf(link.depth) < 3
+    //             ? 0
+    //             : 1;
+    // });
+
+    // Add depthFrequencyRanking to each link.
+    // Currently binning into two categories: top 3, or the rest
+    const newLinks = links.map((originalLink) => {
+        const updatedLink = { ...originalLink };
+        updatedLink.scoring.depthFrequencyRanking
+            = depthsByFrequency.indexOf(updatedLink.depth) < 3
+                ? 0
+                : 1;
+        return (updatedLink);
     });
 
     return (newLinks);
@@ -318,33 +305,29 @@ function scoreDepthSiblings(links) {
 
 function scoreBaseUrlSimilarity(links, baseUrl) {
     //
-    // Testing a straight up removal. List-type posts just won't work with the system.
+    // Testing actually removing the links from the list, instead of marking its params. List-type posts just won't work with the system.
     //
 
-    // var newLinks = [ ... links];
-    const newLinks = [];
     const baseTitle = extractBaseTitle(baseUrl);
 
-    // for (const link in newLinks) {
-    Object.values(links).forEach((linkData) => {
-        if (linkData.url.slice(0, 1) === "/") {
-            // linkData.scoring.similarToBaseUrl = true;
-            newLinks.push(linkData);
-        } else if (linkData.url.includes(baseTitle)) {
-            // linkData.scoring.similarToBaseUrl = true;
-            newLinks.push(linkData);
-        } else {
-            // linkData.scoring.similarToBaseUrl = false;
-        }
-    });
-
+    const newLinks = links.filter((originalLinkData) => (
+        originalLinkData.url.slice(0, 1) === "/"
+            || originalLinkData.url.includes(baseTitle)
+    ));
+        // if (linkData.url.slice(0, 1) === "/") {
+        //     // linkData.scoring.similarToBaseUrl = true;
+        //     newLinks.push(linkData);
+        // } else if (linkData.url.includes(baseTitle)) {
+        //     // linkData.scoring.similarToBaseUrl = true;
+        //     newLinks.push(linkData);
+        // } else {
+        //     // linkData.scoring.similarToBaseUrl = false;
+        // }
     return (newLinks);
 }
 
 function scoreFrequency(links) {
-    const newLinks = [...links];
-
-    const linkCount = newLinks
+    const linkCount = links
         .map((link) => (link.url))
         .reduce((counter, link) => {
             const updatedCounter = { ...counter };
@@ -357,8 +340,10 @@ function scoreFrequency(links) {
             return (updatedCounter);
         }, {});
 
-    Object.values(newLinks).forEach((linkData) => {
-        linkData.scoring.frequency = linkCount[linkData.url] - 1;
+    const newLinks = links.map((originalLinkData) => {
+        const updatedLinkData = { ...originalLinkData };
+        updatedLinkData.scoring.frequency = linkCount[updatedLinkData.url] - 1;
+        return (updatedLinkData);
     });
 
     return (newLinks);
@@ -369,48 +354,47 @@ function scoreLinkStructureSimilarity(links) {
     // Boost links that have the same structure as the dominent structure.
     // For now, "structure" is just defined as: number of parts (slash (/) delimited)
 
-    const newLinks = [...links];
-
-    // Count each link
+    // Determine structure of each link, and frequency of each structure
     const structureCounts = {};
     const linkStructures = {};
-    newLinks
+    links
         .map((link) => link.url)
         .forEach((link) => {
-            const count = link.split("/").length - 1;
-            console.log(count);
-            linkStructures[link] = count;
-            if (count in structureCounts) {
-                structureCounts[count] += 1;
+            const structure = link.split("/").length - 1;
+            linkStructures[link] = structure;
+
+            if (structure in structureCounts) {
+                structureCounts[structure] += 1;
             } else {
-                structureCounts[count] = 1;
+                structureCounts[structure] = 1;
             }
         });
 
     const sortedStructures = sortObjectByValue(structureCounts);
     const mostCommonStructure = parseInt(sortedStructures.slice(-1)[0], 10); // last element in the ascending-ly sorted list
-    console.log(sortedStructures, mostCommonStructure);
 
-    Object.values(newLinks).forEach((linkData) => {
-        console.log(linkStructures[linkData.url], linkStructures[linkData.url] === mostCommonStructure);
-        linkData.scoring.structureSimilarity = linkStructures[linkData.url] === mostCommonStructure;
+    const newLinks = links.map((originalLinkData) => {
+        // console.log(linkStructures[originalLinkData.url], linkStructures[originalLinkData.url] === mostCommonStructure);
+        const updatedLinkData = { ...originalLinkData };
+        updatedLinkData.scoring.structureSimilarity = linkStructures[updatedLinkData.url] === mostCommonStructure;
+        return (updatedLinkData);
     });
 
     return (newLinks);
 }
 
 function scoreLinks(links, baseUrl) {
-    // Lower is better
     let scoredLinks = [...links];
 
-    // Run scoring functions
+    // Run scoring functions.
+    // Lower is better.
     scoredLinks = scoreDepthSiblings(scoredLinks);
     scoredLinks = scoreBaseUrlSimilarity(scoredLinks, baseUrl);
     scoredLinks = scoreFrequency(scoredLinks);
     scoredLinks = scoreLinkStructureSimilarity(scoredLinks);
 
     // Compute total score
-    Object.values(scoredLinks).forEach((linkData) => {
+    scoredLinks = scoredLinks.map((linkData) => {
         let score = 0;
         score += scoringWeights.depthFrequencyRanking * linkData.scoring.depthFrequencyRanking;
         score += scoringWeights.containsBannedWords * (linkData.scoring.containsBannedWords ? 5 : 0);
@@ -424,7 +408,9 @@ function scoreLinks(links, baseUrl) {
             score += scoringWeights.containsHeader * (linkData.scoring.containsHeader ? 1 : 0);
         }
 
-        linkData.scoring.score = score;
+        const updatedLinkData = { ...linkData };
+        updatedLinkData.scoring.score = score;
+        return (updatedLinkData);
     });
 
     return (scoredLinks);
@@ -481,8 +467,6 @@ async function parseWebpage(url, callback) {
         nodes.forEach((node) => {
             foundLinks = foundLinks.concat(traverser(node, 0, parentTypes.UNKNOWN, false, false));
         });
-
-        // if (logStatus) { console.log(foundLinks); }
 
         const cleanedLinks = cleanLinks(foundLinks, url); // TODO converting dict to list needs to be moved out of this step
         const scoredLinks = scoreLinks(cleanedLinks, url);

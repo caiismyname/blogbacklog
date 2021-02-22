@@ -9,6 +9,7 @@ module.exports = {
         indent: ["error", 4],
         quotes: ["error", "double"],
         "max-len": ["warn", { code: 120 }],
+	"operator-linebreak": ["error", "before"],
     },
     parserOptions: {
         ecmaVersion: 2018,
