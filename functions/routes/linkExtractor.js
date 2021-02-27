@@ -37,7 +37,7 @@ function extractBaseTitle(baseUrl) {
 
 function cleanLinks(links, baseUrl) {
     // Replace strange characters
-    let cleanedLinks = links.map(originalLink => {
+    let cleanedLinks = links.map((originalLink) => {
         const updatedLink = { ...originalLink };
         const toReplace = {
             " ": "",
@@ -48,11 +48,11 @@ function cleanLinks(links, baseUrl) {
             updatedLink.url = updatedLink.url.replace(key, toReplace[key]);
         });
 
-        return(updatedLink);
+        return (updatedLink);
     });
 
     // Remove obviously incorrect links
-    cleanedLinks = cleanedLinks.filter(linkData => {
+    cleanedLinks = cleanedLinks.filter((linkData) => {
         // Remove non-links.
         // /comments, /about, and /account are for substack
         const banned = [".rss", ".xml", ".jpg", ".png", "mailto:", "facebook.com", "twitter.com", "linkedin.com", "github.com", "javascript:void(0)", "redirect=", "#more", "#comments", ".zip", "/comments", "/about", "/account", "/author/", "/user/", "/tag", "/page/", "/people/"]; // eslint-disable-line no-script-url
