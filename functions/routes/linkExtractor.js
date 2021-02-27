@@ -89,7 +89,31 @@ function sortObjectByValue(inputObject) {
     );
 }
 
-// Post-processing on cleaned links to ensure they are all full URLs
+// Properly combines a base and relative URL, taking note of the following condition:
+// If two links of structure "http://foo.com/bar" and "/bar/baz" have a repeating element (in this example, `bar`), not to repeat `bar`
+function combineBaseAndRelativeUrl(a,b) {
+    const aSplit = a.split("/").filter(x => x !== "");
+    const bSplit = b.split("/").filter(x => x !== "");
+    
+    // Start with the base URL to avoid confusion with `https://`
+    let combined = a;
+    // Ensure the starting URL is now `foo.com/` (ends in `/`)
+    if (combined.slice(-1) !== "/") {
+      combined = combined + "/";
+    }
+    
+    // There is an overlap
+    if (aSplit[aSplit.length - 1] === bSplit[0]) {
+      const dedupedBSplit = bSplit.slice(1);
+      combined = dedupedBSplit.reduce((acc, elem) => acc + elem + "/", combined);
+    } else {
+      combined = combined + (b.slice(0,1) === "/" ? b.slice(1) : b);
+    }
+    
+    return (combined);
+}
+
+// Post-processing on chosen links to ensure they are all full URLs
 function formatLinks(links, baseUrl) {
     let newBaseUrl = baseUrl;
     if (newBaseUrl.slice(-1) !== "/") {
@@ -99,12 +123,10 @@ function formatLinks(links, baseUrl) {
     let newLinks = links.slice();
     newLinks = newLinks.map((link) => {
         const updatedLink = { ...link };
+
+        // Append base url if on-page links are relative (e.g. /blog/entry)
         if (updatedLink.url.slice(0, 4) !== "http") {
-            if (updatedLink.url.slice(0, 1) !== "/") {
-                updatedLink.url = newBaseUrl + updatedLink.url;
-            } else {
-                updatedLink.url = newBaseUrl + updatedLink.url.slice(1);
-            }
+            updatedLink.url = combineBaseAndRelativeUrl(newBaseUrl, updatedLink.url);
         }
 
         return (updatedLink);
