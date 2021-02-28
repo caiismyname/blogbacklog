@@ -5,23 +5,20 @@ block content
     form(name="submitInfo", action="/process/createFeed", method="post")
         input(type="hidden", name="baseUrl", value= data.baseUrl)
         if numLinksExtracted > 0
-            h1 Here's what we found
-            p Extracted from #{data.baseUrl}
-            br
+            h2 Here's what we found on <i>#{data.baseUrl}</i>
             each link in data.links
                 input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox
-                label(for=link)=" " + link
+                a(href=link)
+                    label(for=link, class="linkList")=" " + link
                 br
-            br
-            hr
-            h2 Paste in any missed links (comma separated)
+            h3 Paste in any missed links (comma separated)
         else
             h1 Sorry, looks like we didn't find anything at #{data.baseUrl}
-            h2 But feel free to manually add links you want delivered below.
-        textarea(name="manualLinks")
-        h2 Delivery Schedule
+            h2 But feel free to manually add links you want delivered below (comma separated)
+        textarea(name="manualLinks", class="textBox")
+        h2 Delivery
         div.input
-            p Frequency: Every <i>n</i> days
+            h3 Scheduled Frequency (every <i>n</i> days)
             each val in [1,2,3,4,5,6,7]
                 if val == 3
                     input(type="radio", name="frequency", value=val, id=val, checked=true)
@@ -29,8 +26,8 @@ block content
                     input(type="radio", name="frequency", value=val, id=val)
                 label(for=val)=" " + val
                 br
-            p Delivery email address:
-            input(type="text", name="recipientEmail", id="emailInput")
+            h3 Delivery email address
+            input(type="text", name="recipientEmail", id="emailInput", class="textBox")
             //- p Select your delivery schedule:
             //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             //-     input(type="radio", name="dayOfWeek", value=day, id=day)
@@ -39,7 +36,7 @@ block content
             //- br
         br
         div.action
-            input(type="submit", value="Submit", id="submitButton")
+            input(type="submit", value="Submit", id="submitButton", class="button")
 
     script(type='text/javascript').
         document.getElementById('submitButton').disabled = true;

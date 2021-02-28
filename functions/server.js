@@ -24,8 +24,9 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"))); // Used to serve the CSS file
 
+// Routers
 app.use("/", indexRouter);
 app.use("/process", processRouter);
 app.use("/unsubscribe", unsubscribeRouter);

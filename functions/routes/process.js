@@ -76,7 +76,7 @@ router.post("/createFeed", async (req, res) => {
         sendWelcomeEmail(allLinks, req.body, fbRes.id);
         res.render("complete",
             {
-                title: "Blog Backlog",
+                title: "BlogBacklog",
                 data: {
                     numLinks: req.body.links.length,
                     recipientEmail: req.body.recipientEmail.trim(),
@@ -95,7 +95,7 @@ router.post("/parse", async (req, res) => {
     processFunc(url, (cleanedLinks) => {
         res.render("saveChanges",
             {
-                title: "Blog Backlog",
+                title: "BlogBacklog",
                 data: {
                     links: cleanedLinks,
                     baseUrl: url,
