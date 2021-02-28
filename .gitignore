@@ -19,6 +19,9 @@
 .env.production.local
 *.icloud
 *.log
+.firebase/*
+.firebaserc
+.github/*
 
 npm-debug.log*
 yarn-debug.log*

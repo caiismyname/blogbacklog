@@ -91,25 +91,25 @@ function sortObjectByValue(inputObject) {
 
 // Properly combines a base and relative URL, taking note of the following condition:
 // If two links of structure "http://foo.com/bar" and "/bar/baz" have a repeating element (in this example, `bar`), not to repeat `bar`
-function combineBaseAndRelativeUrl(a,b) {
-    const aSplit = a.split("/").filter(x => x !== "");
-    const bSplit = b.split("/").filter(x => x !== "");
-    
+function combineBaseAndRelativeUrl(a, b) {
+    const aSplit = a.split("/").filter((x) => x !== "");
+    const bSplit = b.split("/").filter((x) => x !== "");
+
     // Start with the base URL to avoid confusion with `https://`
     let combined = a;
     // Ensure the starting URL is now `foo.com/` (ends in `/`)
     if (combined.slice(-1) !== "/") {
-      combined = combined + "/";
+        combined = `${combined}/`;
     }
-    
+
     // There is an overlap
     if (aSplit[aSplit.length - 1] === bSplit[0]) {
-      const dedupedBSplit = bSplit.slice(1);
-      combined = dedupedBSplit.reduce((acc, elem) => acc + elem + "/", combined);
+        const dedupedBSplit = bSplit.slice(1);
+        combined = dedupedBSplit.reduce((acc, elem) => `${acc + elem}/`, combined);
     } else {
-      combined = combined + (b.slice(0,1) === "/" ? b.slice(1) : b);
+        combined += (b.slice(0, 1) === "/" ? b.slice(1) : b);
     }
-    
+
     return (combined);
 }
 
