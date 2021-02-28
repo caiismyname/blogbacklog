@@ -1,51 +1,76 @@
+/* Header styling */
+.header {
+  text-align: left;
+  width: 100%;
+  max-height: 50px;
+  padding-left: 10%;
+  color:#f2441d;
+}
+
+.header a {
+  color:#f2441d;
+}
+
+/* Base body styling */
 body {
-  padding: 50px;
-  font: 24px "Lucida Grande", Helvetica, Arial, sans-serif;
-  max-width: 800px;
+  font: 20px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background: #f2f2f2;
+  color: #141a26;
+}
+
+/* Container for centering body content. */
+.contentStyle {
   margin: 0 auto;
-  background:#fffcf4;
+  max-width: 800px;
+  padding: 2% 13%; /* Horizontal padding is 13% to be inset from header. */
 }
 
-a {
-  color: #00B7FF;
-}
-
-a h1 {
-  color: black;
-  text-decoration: none;
-}
-
-.linkList {
+.contentStyle a {
+  color: #f2441d;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* Container for delivery section on `saveChanges` page. Is wider than the parent (body) div, and color is inverted for distinction. */
+.deliveryContainer {
+  background: #141a26;
+  color: #f2f2f2;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-top: 2%;
+  box-shadow: 0 50vh 0 50vh #141a26; /* Extends the section to the bottom of the page, if shorter than viewport. This serves as the footer. */
 }
 
 .textBox {
   width: 100%;
   height: 2em;
-  font-size: 24px;
   margin: 0 auto;
   font: 24px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
-.button {
+.button { /* Note that button is a class because I had to apply styling to the div since it was technically a form submit, not a proper button. */
   border: none;
-  color: white;
-  background-color: black;
+  background: #141a26;
+  color: #f2f2f2;
   padding: 15px 32px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
   cursor: pointer;
+  font: 20px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
+/* Light version of the button, for dark backgrounds. */
+.buttonLight {
+  background: #f2f2f2;
+  color: #141a26;
+}
+
+/* Disabled state for buttons. */
 input:disabled {
   opacity: 0.3;
   cursor: not-allowed;
-}
-
-head {
-  background-color: green;
-  width: 100%;
 }

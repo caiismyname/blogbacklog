@@ -9,34 +9,36 @@ block content
             each link in data.links
                 input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox
                 a(href=link)
-                    label(for=link, class="linkList")=" " + link
+                    label(for=link)=" " + link
                 br
             h3 Paste in any missed links (comma separated)
         else
             h1 Sorry, looks like we didn't find anything at #{data.baseUrl}
             h2 But feel free to manually add links you want delivered below (comma separated)
         textarea(name="manualLinks", class="textBox")
-        h2 Delivery
-        div.input
-            h3 Scheduled Frequency (every <i>n</i> days)
-            each val in [1,2,3,4,5,6,7]
-                if val == 3
-                    input(type="radio", name="frequency", value=val, id=val, checked=true)
-                else
-                    input(type="radio", name="frequency", value=val, id=val)
-                label(for=val)=" " + val
+        .deliveryContainer
+            .contentStyle
+                h2 Delivery
+                div.input
+                    h3 Scheduled Frequency (every <i>n</i> days)
+                    each val in [1,2,3,4,5,6,7]
+                        if val == 3
+                            input(type="radio", name="frequency", value=val, id=val, checked=true)
+                        else
+                            input(type="radio", name="frequency", value=val, id=val)
+                        label(for=val)=" " + val
+                        br
+                    h3 Delivery email address
+                    input(type="text", name="recipientEmail", id="emailInput", class="textBox")
+                    //- p Select your delivery schedule:
+                    //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                    //-     input(type="radio", name="dayOfWeek", value=day, id=day)
+                    //-     label(for=day)=" " + day
+                    //-     br
+                    //- br
                 br
-            h3 Delivery email address
-            input(type="text", name="recipientEmail", id="emailInput", class="textBox")
-            //- p Select your delivery schedule:
-            //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            //-     input(type="radio", name="dayOfWeek", value=day, id=day)
-            //-     label(for=day)=" " + day
-            //-     br
-            //- br
-        br
-        div.action
-            input(type="submit", value="Submit", id="submitButton", class="button")
+                div.action
+                    input(type="submit", value="Submit", id="submitButton", class="button buttonLight")
 
     script(type='text/javascript').
         document.getElementById('submitButton').disabled = true;

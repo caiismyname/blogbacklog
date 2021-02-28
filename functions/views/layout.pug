@@ -3,7 +3,9 @@ html
     head
         title= title
         link(rel='stylesheet', href='/stylesheets/style.css')
-        a(href="/")
-            h1= title
     body
-        block content
+        .header
+            a(href="/")
+                h1= title
+        .contentStyle
+            block content
