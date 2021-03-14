@@ -99,7 +99,6 @@ router.post("/parse", async (req, res) => {
     }
 
     console.log(url);
-    
     processFunc(url, (cleanedLinks) => {
         res.render("saveChanges",
             {

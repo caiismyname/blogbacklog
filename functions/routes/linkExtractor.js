@@ -26,7 +26,7 @@ function extractBaseUrl(inputUrl) {
     if (cur === -1) {
         return (false);
     }
-    
+
     while (inputUrl[cur] !== "/" && inputUrl[cur] !== "?" && cur < inputUrl.length) {
         cleaned += inputUrl[cur];
         cur += 1;
@@ -118,7 +118,7 @@ function combineBaseAndRelativeUrl(a, b) {
 
 // Post-processing on chosen links to ensure they are all full URLs
 function formatLinks(links, baseUrl) {
-    let newBaseUrl = baseUrl;
+    const newBaseUrl = baseUrl;
 
     let newLinks = links.slice();
     newLinks = newLinks.map((link) => {
