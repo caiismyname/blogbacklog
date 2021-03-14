@@ -117,6 +117,7 @@ function combineBaseAndRelativeUrl(a, b) {
 }
 
 // Post-processing on chosen links to ensure they are all full URLs
+// Removes extraneous fields to prepare link objects for storage in FB
 function formatLinks(links, baseUrl) {
     const newBaseUrl = baseUrl;
 
@@ -129,7 +130,10 @@ function formatLinks(links, baseUrl) {
             updatedLink.url = combineBaseAndRelativeUrl(newBaseUrl, updatedLink.url);
         }
 
-        return (updatedLink);
+        return ({
+            "title": updatedLink.url, // Reuse URL for now, just to keep the field filled. TODO fix
+            "url": updatedLink.url
+        })
     });
 
     return (newLinks);
@@ -494,12 +498,11 @@ async function parseWebpage(url, callback) {
         if (logStatus) { console.log("scored", scoredLinks); }
         const chosenLinks = pickLinks(scoredLinks);
         const formattedLinks = formatLinks(chosenLinks, extractBaseUrl(url));
+        const dedupedLinks = removeDuplicates(formattedLinks);
 
-        const extractedLinks = removeDuplicates(formattedLinks.map((link) => (link.url)));
+        if (logStatus) { console.log("Extracted Links:", dedpuedLinks); }
 
-        if (logStatus) { console.log("Extracted Links:", extractedLinks); }
-
-        callback(extractedLinks);
+        callback(dedupedLinks);
     });
 }
 

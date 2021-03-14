@@ -59,7 +59,7 @@ function sendMail(toSend) {
             from: "Blog Backlog <send@mail.blogbacklog.com>",
             to: feed.recipientEmail,
             subject: `Delivery from ${feed.sourceTitle}`,
-            text: `Your article: ${feed.entries[0]}\n\nUnsubscribe link: blogbacklog.com/unsubscribe/${feed.id}`,
+            text: `Your article: ${feed.entries[0].url}\n\nUnsubscribe link: blogbacklog.com/unsubscribe/${feed.id}`,
         };
         mg.messages().send(data, (error, body) => {
             if (body) {
