@@ -3,9 +3,8 @@ const request = require("request");
 async function isSubstack(url, callback) {
     const options = {
         url,
-        headers: {
-            "User-Agent": "request",
-        },
+        method: "HEAD", // Only request headers, skip the body
+        headers: { "User-Agent": "request" },
     };
 
     request(options, (err, res) => {
