@@ -22,13 +22,15 @@ async function isSubstack(url, callback) {
 // This functions assumes the given URL is for a substack publication.
 // The return value is to be used as the value for `pubName` in `getSubstackLinks`
 // Does NOT include trailing `/`
-function getSubstackPubName(url) {
+async function getSubstackPubName(url, callback) {
     const start = url.indexOf("://") + 3;
     let end = url.indexOf("/", start);
     if (end === -1) {
         end = url.length;
     }
-    return url.slice(0, end);
+
+    const pubName = url.slice(0, end);
+    callback(pubName);
 }
 
 async function getArticles(pubName, sort, offset, limit, callback) {
@@ -86,4 +88,4 @@ async function getSubstackLinks(pubName, callback) {
 
 exports.getSubstackLinks = (pubName, callback) => { getSubstackLinks(pubName, callback); };
 exports.isSubstack = (url, callback) => { isSubstack(url, callback); };
-exports.getSubstackPubName = (url) => { getSubstackPubName(url); };
+exports.getSubstackPubName = (url, callback) => { getSubstackPubName(url, callback); };

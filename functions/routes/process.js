@@ -59,8 +59,17 @@ router.post("/createFeed", async (req, res) => {
     const feedsRef = db.collection("feeds");
     const cleanedTitle = extractBaseTitle(req.body.baseUrl);
 
-    const manualInputedLinks = splitManualInputLinks(req.body.manualLinks);
-    const allLinks = req.body.links.concat(manualInputedLinks);
+    let manualInputedLinks = splitManualInputLinks(req.body.manualLinks);
+    manualInputedLinks = manualInputedLinks.map(link => {
+        return ({
+            "title": link, // Reuse URL for now, just to keep the field filled. TODO fix
+            "url": link
+        });
+    })
+
+    const allLinks = req.body.links
+        .map(entry => JSON.parse(entry)) // The object gets converted to a string when sent through the HTML form
+        .concat(manualInputedLinks);
 
     await feedsRef.add({
         entries: allLinks,

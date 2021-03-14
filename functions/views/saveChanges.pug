@@ -7,9 +7,9 @@ block content
         if numLinksExtracted > 0
             h2 Here's what we found on <i>#{data.baseUrl}</i>
             each link in data.links
-                input(type="checkbox", name="links", value=link, checked=(true, id=link)).checkbox
-                a(href=link)
-                    label(for=link)=" " + link
+                input(type="checkbox", name="links", value=link, checked=(true, id=link.url)).checkbox
+                a(href=link.url)
+                    label(for=link.url)=" " + link.url
                 br
             h3 Paste in any missed links (comma separated)
         else
