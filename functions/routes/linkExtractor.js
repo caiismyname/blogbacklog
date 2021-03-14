@@ -19,18 +19,21 @@ function computeAverage(inputs) {
     return (inputs.reduce((sum, cur) => sum + cur) / inputs.length);
 }
 
-function extractBaseTitle(baseUrl) {
-    const start = baseUrl.indexOf("://");
-    if (start === -1) {
-        return (baseUrl);
-    }
+function extractBaseUrl(inputUrl) {
+    let cleaned = "https://";
 
-    let cleaned = "";
-    let cur = start + 3;
-    while (baseUrl[cur] !== "/" && baseUrl[cur] !== "?" && cur < baseUrl.length) {
-        cleaned += baseUrl[cur];
+    let cur = inputUrl.indexOf("://") + 3;
+    if (cur === -1) {
+        return (false);
+    }
+    
+    while (inputUrl[cur] !== "/" && inputUrl[cur] !== "?" && cur < inputUrl.length) {
+        cleaned += inputUrl[cur];
         cur += 1;
     }
+
+    // Add the trailing `/` for link appends later on
+    cleaned = cleaned.concat("/");
 
     return (cleaned);
 }
@@ -116,9 +119,6 @@ function combineBaseAndRelativeUrl(a, b) {
 // Post-processing on chosen links to ensure they are all full URLs
 function formatLinks(links, baseUrl) {
     let newBaseUrl = baseUrl;
-    if (newBaseUrl.slice(-1) !== "/") {
-        newBaseUrl = newBaseUrl.concat("/");
-    }
 
     let newLinks = links.slice();
     newLinks = newLinks.map((link) => {
@@ -176,7 +176,7 @@ function findRoot(parsed) {
 function detectBannedContent(attribs) {
     // Detect headers / sidebars
     const sections = ["class", "id", "role"];
-    const extraneous = ["sidebar", "nav", "footer", "tag"];
+    const extraneous = ["nav", "footer", "tag"];
 
     let containsBannedWords = false;
     let containsHeader = false;
@@ -330,7 +330,7 @@ function scoreBaseUrlSimilarity(links, baseUrl) {
     // Testing actually removing the links from the list, instead of marking its params. List-type posts just won't work with the system.
     //
 
-    const baseTitle = extractBaseTitle(baseUrl);
+    const baseTitle = extractBaseUrl(baseUrl);
 
     const newLinks = links.filter((originalLinkData) => (
         originalLinkData.url.slice(0, 1) === "/"
@@ -482,7 +482,6 @@ async function parseWebpage(url, callback) {
             callback([]);
             return;
         }
-
         const nodes = findRoot(domParser(body));
         let foundLinks = []; // dict of [link: weight]
 
@@ -494,7 +493,7 @@ async function parseWebpage(url, callback) {
         const scoredLinks = scoreLinks(cleanedLinks, url);
         if (logStatus) { console.log("scored", scoredLinks); }
         const chosenLinks = pickLinks(scoredLinks);
-        const formattedLinks = formatLinks(chosenLinks, url);
+        const formattedLinks = formatLinks(chosenLinks, extractBaseUrl(url));
 
         const extractedLinks = removeDuplicates(formattedLinks.map((link) => (link.url)));
 
@@ -505,5 +504,5 @@ async function parseWebpage(url, callback) {
 }
 
 exports.processFunc = (url, callback) => { parseWebpage(url, callback); };
-exports.extractBaseTitle = (baseUrl) => (extractBaseTitle(baseUrl));
+exports.extractBaseTitle = (baseUrl) => (extractBaseUrl(baseUrl)); // TODO Currently using the same func for title and url, will have to make a title specific func later. And put it in a different file.
 exports.setLogStatus = (status) => { setLogStatus(status); };

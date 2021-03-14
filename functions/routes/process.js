@@ -89,9 +89,17 @@ router.post("/createFeed", async (req, res) => {
 
 router.post("/parse", async (req, res) => {
     let url = req.body.baseUrl.trim();
+
+    // Forcing `https`
     if (!url.includes("http")) {
-        url = `http://${url}`;
+        url = `https://${url}`;
+    } else if (!url.includes("https")) {
+        const restOfUrl = url.slice(url.indexOf("://") + 3);
+        url = `https://${restOfUrl}`;
     }
+
+    console.log(url);
+    
     processFunc(url, (cleanedLinks) => {
         res.render("saveChanges",
             {
