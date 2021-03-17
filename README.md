@@ -21,7 +21,7 @@ BBL is intended to scrape an index page of a blog (e.g. "All posts", "Archive", 
 
 ## Feature Todo List
 
-* Automated handling of paged blogs
+* Automated handling of paged blogs (but Substack works!)
 * Mimicking "scroll to the bottom" on pages that dynamically load content in batches, such as Substack's "all posts" page
 * Better removal of sidebar / header elements
 * Continual improvement of the parsing heuristic
