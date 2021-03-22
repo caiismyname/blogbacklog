@@ -133,9 +133,9 @@ function formatLinks(links, baseUrl) {
         }
 
         return ({
-            "title": updatedLink.url, // Reuse URL for now, just to keep the field filled. TODO fix
-            "url": updatedLink.url
-        })
+            title: updatedLink.url, // Reuse URL for now, just to keep the field filled. TODO fix
+            url: updatedLink.url,
+        });
     });
 
     return (newLinks);
@@ -478,7 +478,7 @@ function setLogStatus(status) {
 async function parseWebpage(url, callback) {
     isSubstack(url, (result) => {
         if (result === true) {
-            getSubstackPubName(url, pubName => {
+            getSubstackPubName(url, (pubName) => {
                 getSubstackLinks(pubName, callback);
             });
         } else {
@@ -497,20 +497,20 @@ async function parseWebpage(url, callback) {
                 }
                 const nodes = findRoot(domParser(body));
                 let foundLinks = []; // dict of [link: weight]
-        
+
                 nodes.forEach((node) => {
                     foundLinks = foundLinks.concat(traverser(node, 0, parentTypes.UNKNOWN, false, false));
                 });
-        
+
                 const cleanedLinks = cleanLinks(foundLinks, url); // TODO converting dict to list needs to be moved out of this step
                 const scoredLinks = scoreLinks(cleanedLinks, url);
                 if (logStatus) { console.log("scored", scoredLinks); }
                 const chosenLinks = pickLinks(scoredLinks);
                 const formattedLinks = formatLinks(chosenLinks, extractBaseUrl(url));
                 const dedupedLinks = removeDuplicates(formattedLinks);
-        
+
                 if (logStatus) { console.log("Extracted Links:", dedupedLinks); }
-        
+
                 callback(dedupedLinks);
             });
         }

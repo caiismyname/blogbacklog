@@ -52,10 +52,10 @@ async function getArticles(pubName, sort, offset, limit, callback) {
 
         // Strip out extranenous returned fields
         const links = JSON.parse(body).map(
-            (entry) => ({ 
+            (entry) => ({
                 title: entry.title,
-                url: entry.canonical_url
-            })
+                url: entry.canonical_url,
+            }),
         );
 
         // End recursion if no more articles

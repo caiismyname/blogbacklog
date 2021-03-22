@@ -60,15 +60,13 @@ router.post("/createFeed", async (req, res) => {
     const cleanedTitle = extractBaseTitle(req.body.baseUrl);
 
     let manualInputedLinks = splitManualInputLinks(req.body.manualLinks);
-    manualInputedLinks = manualInputedLinks.map(link => {
-        return ({
-            "title": link, // Reuse URL for now, just to keep the field filled. TODO fix
-            "url": link
-        });
-    })
+    manualInputedLinks = manualInputedLinks.map((link) => ({
+        title: link, // Reuse URL for now, just to keep the field filled. TODO fix
+        url: link,
+    }));
 
     const allLinks = req.body.links
-        .map(entry => JSON.parse(entry)) // The object gets converted to a string when sent through the HTML form
+        .map((entry) => JSON.parse(entry)) // The object gets converted to a string when sent through the HTML form
         .concat(manualInputedLinks);
 
     await feedsRef.add({
