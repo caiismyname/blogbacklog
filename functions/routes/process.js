@@ -23,7 +23,9 @@ function sendWelcomeEmail(links, info, id) {
 
     // Prepare data for sending the welcome email
     const cleanedTitle = extractBaseTitle(info.baseUrl);
-    const cleanedLinks = links.reduce((accum, link) => `${accum}- ${link}\n`, "");
+    const cleanedLinks = links
+        .map((link) => link.url)
+        .reduce((accum, link) => `${accum}- ${link}\n`, "");
     const data = {
         from: "Blog Backlog <send@mail.blogbacklog.com>",
         to: info.recipientEmail,
