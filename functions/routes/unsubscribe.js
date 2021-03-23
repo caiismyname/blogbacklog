@@ -5,6 +5,7 @@ const router = express.Router();
 const db = admin.firestore();
 
 async function unsubscribeFunc(id) {
+    analytics.logEvent("Unsubscribed");
     const userData = {
         recipientEmail: "",
         remainingCount: 0,

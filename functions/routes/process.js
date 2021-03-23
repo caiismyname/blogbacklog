@@ -1,15 +1,12 @@
 const express = require("express");
-const firebaseAdmin = require("firebase-admin");
 const functions = require("firebase-functions");
+const firebaseAdmin = require("firebase-admin");
 const mailgun = require("mailgun-js");
 const { processFunc, extractBaseTitle } = require("./linkExtractor");
 
 const router = express.Router();
-
-firebaseAdmin.initializeApp({
-    credential: firebaseAdmin.credential.applicationDefault(),
-});
 const db = firebaseAdmin.firestore();
+
 
 function splitManualInputLinks(input) {
     const spaceStripped = input.replace(" ", "");

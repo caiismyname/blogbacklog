@@ -40,7 +40,27 @@ block content
                 div.action
                     input(type="submit", value="Submit", id="submitButton", class="button buttonLight")
 
+    
+    
+    script(src='https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js')
+    script(src='https://www.gstatic.com/firebasejs/8.3.1/firebase-analytics.js')
     script(type='text/javascript').
+        // Firebase Analytics
+        var firebaseConfig = {
+            apiKey: "AIzaSyAvBpDMHIeSfkH_IeDY068zuQPf77KybXM",
+            authDomain: "blogbacklog.firebaseapp.com",
+            databaseURL: "https://blogbacklog.firebaseio.com",
+            projectId: "blogbacklog",
+            storageBucket: "blogbacklog.appspot.com",
+            messagingSenderId: "943834384815",
+            appId: "1:943834384815:web:40ba0c14f0009f6e40c75a",
+            measurementId: "G-Z308M43D2X"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const analytics = firebase.analytics();
+
+        // Control submit button
         document.getElementById('submitButton').disabled = true;
 
         function isValidEmail(emailAddress) {
@@ -51,3 +71,8 @@ block content
         document.getElementById('emailInput').addEventListener('input', function() {
             document.getElementById('submitButton').disabled = !isValidEmail(this.value);
         });
+
+        document.getElementById('submitButton').onclick = () => {
+            alert('foo');
+            analytics.logEvent("feed_save");
+        }
