@@ -7,7 +7,6 @@ const { processFunc, extractBaseTitle } = require("./linkExtractor");
 const router = express.Router();
 const db = firebaseAdmin.firestore();
 
-
 function splitManualInputLinks(input) {
     const spaceStripped = input.replace(" ", "");
     const separated = spaceStripped.split(",");

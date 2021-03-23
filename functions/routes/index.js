@@ -1,5 +1,6 @@
 const express = require("express");
 const firebaseAdmin = require("firebase-admin");
+
 const router = express.Router();
 
 firebaseAdmin.initializeApp({
