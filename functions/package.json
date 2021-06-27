@@ -22,6 +22,7 @@
     "eslint-config-airbnb": "^18.2.1",
     "express": "~4.16.1",
     "firebase-admin": "^9.2.0",
+    "firebase-app": "^0.0.1",
     "firebase-functions": "^3.11.0",
     "html-dom-parser": "0.3.0",
     "htmlparser2": "5.0.0",
