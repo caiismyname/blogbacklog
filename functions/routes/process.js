@@ -10,8 +10,8 @@ const db = firebaseAdmin.firestore();
 
 const DELIVERY_METHODS = {
     POCKET: "POCKET",
-    EMAIL: "EMAIL"
-}
+    EMAIL: "EMAIL",
+};
 
 function splitManualInputLinks(input) {
     const spaceStripped = input.replace(" ", "");
@@ -23,7 +23,7 @@ function splitManualInputLinks(input) {
 
 function combineLinks(links, manualLinks) {
     let manualInputedLinks = splitManualInputLinks(manualLinks);
-    
+
     manualInputedLinks = manualInputedLinks.map((link) => ({
         title: link, // Reuse URL for now, just to keep the field filled. TODO fix
         url: link,
@@ -89,46 +89,81 @@ async function addToFirebase(data) {
     return fbAdd;
 }
 
-// Routes
+// TODO this is a temp fix, should be a UUID-keyed map
+let tempStoreUserAccessToken;
+const task = {};
+let secondRes;
 
-var tempStoreUserAccessToken;
-var task = {};
-var secondRes;
+// The following technique to handle async tokens and callback URLs comes from https://stackoverflow.com/questions/50724912/how-to-wait-for-a-url-callback-before-send-http-response-in-koa
+async function connectToPocket() {
+    const initialPocketRequest = axios.post(
+        functions.config().pocket.request_token_url,
+        {
+            consumer_key: functions.config().pocket.consumer_key,
+            redirect_uri: functions.config().pocket.redirect_uri,
+        },
+        {
+            responseType: "json",
+            headers: {
+                "Content-Type": "application/json; charset=UTF-8",
+                "X-Accept": "application/json",
+            },
+        },
+    );
+
+    // Returns a Promise (axios.post is a Promise) that will resolve with a data object that contains the one-time access code.
+    return initialPocketRequest;
+}
+
+async function pocketRedirect(res) {
+    const pocketUserData = new Promise((resolve, reject) => {
+        res.redirect(`https://getpocket.com/auth/authorize?request_token=${tempStoreUserAccessToken}&redirect_uri=${functions.config().pocket.redirect_uri}`);
+
+        task.onComplete = (foo) => {
+            resolve(foo);
+        };
+
+        task.onError = () => {
+            reject();
+        };
+    });
+
+    return pocketUserData;
+}
+
+// Routes
 
 router.post("/createFeed", async (req, res) => {
     const allLinks = combineLinks(req.body.links, req.body.manualLinks);
     const fbData = {
-        allLinks: allLinks,
+        allLinks,
         frequency: req.body.frequency,
         baseUrl: req.body.baseUrl,
         deliveryMethod: req.body.deliveryMethod,
     };
 
-    var preFbPromise;
+    let preFbPromise;
 
     if (req.body.deliveryMethod === DELIVERY_METHODS.POCKET) {
         preFbPromise = connectToPocket().then((pocketRes) => {
             // Save the User Access Token for use in future access
             tempStoreUserAccessToken = pocketRes.data.code;
-            
-            return pocketRedirect(tempStoreUserAccessToken, res);
-        }).then((pocketData) => {
-            fbData.deliveryDetails = { ...pocketData};
-        });
 
+            return pocketRedirect(res);
+        }).then((pocketData) => {
+            fbData.deliveryDetails = { ...pocketData };
+        });
     } else if (req.body.deliveryMethod === DELIVERY_METHODS.EMAIL) {
         secondRes = res;
-        preFbPromise = new Promise((resolve, reject) => {
+        preFbPromise = new Promise((resolve) => {
             fbData.deliveryDetails = {
-                recipientEmail: req.body.recipientEmail
+                recipientEmail: req.body.recipientEmail,
             };
             resolve();
         });
     }
 
-    preFbPromise.then(() => {
-        return addToFirebase(fbData);
-    }).then((fbRes) => {
+    preFbPromise.then(() => addToFirebase(fbData)).then((fbRes) => {
         if (req.body.deliveryMethod === DELIVERY_METHODS.EMAIL) {
             sendWelcomeEmail(allLinks, req.body, fbRes.id);
         }
@@ -141,13 +176,12 @@ router.post("/createFeed", async (req, res) => {
                     deliveryMethod: fbData.deliveryMethod,
                     deliveryDetails: fbData.deliveryMethod === DELIVERY_METHODS.EMAIL ? fbData.deliveryDetails : {},
                     frequency: fbData.frequency,
-                    baseUrl: fbData.baseUrl
+                    baseUrl: fbData.baseUrl,
                 },
-            }
-        );
-    }).catch(error => {
+            });
+    }).catch((error) => {
         console.error(error);
-    })
+    });
 });
 
 router.post("/parse", async (req, res) => {
@@ -174,44 +208,6 @@ router.post("/parse", async (req, res) => {
     });
 });
 
-
-// The following technique to handle async tokens and callback URLs comes from https://stackoverflow.com/questions/50724912/how-to-wait-for-a-url-callback-before-send-http-response-in-koa
-async function connectToPocket() {
-    const initialPocketRequest = axios.post(
-        functions.config().pocket.request_token_url,
-        {
-            "consumer_key": functions.config().pocket.consumer_key,
-            "redirect_uri": functions.config().pocket.redirect_uri,
-        },
-        { 
-            responseType: 'json',
-            headers: {
-                "Content-Type": "application/json; charset=UTF-8",
-                "X-Accept": "application/json"
-            }
-        }
-    );
-
-    // Returns a Promise (axios.post is a Promise) that will resolve with a data object that contains the one-time access code.
-    return initialPocketRequest;
-}
-
-async function pocketRedirect(tempStoreUserAccessToken, res) {
-    const pocketUserData = new Promise((resolve, reject) => {
-        res.redirect(`https://getpocket.com/auth/authorize?request_token=${tempStoreUserAccessToken}&redirect_uri=${functions.config().pocket.redirect_uri}`);
-
-        task.onComplete = (foo) => {
-            resolve(foo);
-        };
-
-        task.onError = () => {
-            reject();
-        };
-    });
-
-    return pocketUserData;    
-}
-
 router.get("/pocketAuthFinished", async (req, res) => {
     axios.post(
         functions.config().pocket.request_user_token_url,
@@ -219,13 +215,13 @@ router.get("/pocketAuthFinished", async (req, res) => {
             consumer_key: functions.config().pocket.consumer_key,
             code: tempStoreUserAccessToken,
         },
-        { 
-            responseType: 'json',
+        {
+            responseType: "json",
             headers: {
                 "Content-Type": "application/json; charset=UTF-8",
-                "X-Accept": "application/json"
-            }
-        }
+                "X-Accept": "application/json",
+            },
+        },
     )
         .then((response) => {
             const pocketAccessToken = response.data.access_token;
@@ -241,7 +237,6 @@ router.get("/pocketAuthFinished", async (req, res) => {
         })
         .catch((error) => {
             task.onError(error);
-            return;
         });
 });
 
