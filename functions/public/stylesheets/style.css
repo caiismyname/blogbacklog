@@ -47,6 +47,13 @@ body {
   box-shadow: 0 50vh 0 50vh #141a26; /* Extends the section to the bottom of the page, if shorter than viewport. This serves as the footer. */
 }
 
+.deliveryOption {
+  display: inline-block;
+  width: 46%;
+  padding: 1%;
+  vertical-align: top;
+}
+
 .textBox {
   width: 100%;
   height: 2em;

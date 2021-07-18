@@ -28,19 +28,26 @@ block content
                             input(type="radio", name="frequency", value=val, id=val)
                         label(for=val)=" " + val
                         br
-                    h3 Delivery email address
-                    input(type="text", name="recipientEmail", id="emailInput", class="textBox")
-                    //- p Select your delivery schedule:
-                    //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                    //-     input(type="radio", name="dayOfWeek", value=day, id=day)
-                    //-     label(for=day)=" " + day
-                    //-     br
-                    //- br
+                    br
+                    hr
+                    h3 Delivery Method
+                    input(type="hidden", name="deliveryMethod", id="deliveryMethod")
+                    .deliveryOption
+                        h4 Email
+                        input(type="text", name="recipientEmail", id="emailInput", class="textBox")
+                        //- p Select your delivery schedule:
+                        //- each day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                        //-     input(type="radio", name="dayOfWeek", value=day, id=day)
+                        //-     label(for=day)=" " + day
+                        //-     br
+                        //- br
+                        div.action
+                            input(type="submit", value="Submit", id="submitButtonEmail", class="button buttonLight")
+                    .deliveryOption
+                        h4 Connect to Pocket
+                        div.action
+                            input(type="submit", value="Connect", id="submitButtonPocket", class="button buttonLight")
                 br
-                div.action
-                    input(type="submit", value="Submit", id="submitButton", class="button buttonLight")
-
-    
     
     script(src='https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js')
     script(src='https://www.gstatic.com/firebasejs/8.3.1/firebase-analytics.js')
@@ -61,7 +68,7 @@ block content
         const analytics = firebase.analytics();
 
         // Control submit button
-        document.getElementById('submitButton').disabled = true;
+        document.getElementById('submitButtonEmail').disabled = true;
 
         function isValidEmail(emailAddress) {
             const regex = new RegExp(/\S+@\S+\.\S+/);
@@ -69,9 +76,15 @@ block content
         };
 
         document.getElementById('emailInput').addEventListener('input', function() {
-            document.getElementById('submitButton').disabled = !isValidEmail(this.value);
+            document.getElementById('submitButtonEmail').disabled = !isValidEmail(this.value);
         });
 
-        document.getElementById('submitButton').onclick = () => {
-            analytics.logEvent("feed_save");
+        document.getElementById('submitButtonEmail').onclick = () => {
+            document.getElementById('deliveryMethod').value = "EMAIL";
+            analytics.logEvent("feed_save_email");
+        }
+
+        document.getElementById('submitButtonPocket').onclick = () => {
+            document.getElementById('deliveryMethod').value = "POCKET";
+            analytics.logEvent("feed_save_pocket");
         }

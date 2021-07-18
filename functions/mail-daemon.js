@@ -74,6 +74,29 @@ function sendMail(toSend) {
     return (toSend);
 }
 
+// function sendToPocket(toSend) {
+//     // TO IMPLEMENT
+//     toSend.forEach((feed) => {
+//         console.log(`Sending feed ${feed.id}`);
+//         const data = {
+//             from: "Blog Backlog <send@mail.blogbacklog.com>",
+//             to: feed.recipientEmail,
+//             subject: `Delivery from ${feed.sourceTitle}`,
+//             text: `Your article: ${feed.entries[0].url}\n\nUnsubscribe link: blogbacklog.com/unsubscribe/${feed.id}`,
+//         };
+//         mg.messages().send(data, (error, body) => {
+//             if (body) {
+//                 console.log(body);
+//             }
+//             if (error) {
+//                 console.log(error);
+//             }
+//         });
+//     });
+
+//     return (toSend);
+// }
+
 function createUpdatedDatabaseEntry(feed, now) {
     const updatedFeed = { ...feed };
 
